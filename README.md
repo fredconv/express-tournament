@@ -35,3 +35,14 @@ Réglages attendus dans Cloudflare (Worker → Settings → Build) :
 GitHub Actions (`.github/workflows/ci.yml`) exécute les vérifications sur chaque push et pull request ; il ne déploie pas.
 
 Après une modification de `wrangler.jsonc`, régénérer les types : `npm run cf-typegen`.
+
+## Base de données (D1)
+
+Base de production : `express-tournament-db` (binding `DB`). Les migrations SQL sont dans `migrations/`.
+
+```bash
+npm run db:migrate:local    # applique les migrations à la base locale
+npm run db:migrate:remote   # applique les migrations à la base de production (nécessite `npx wrangler login`)
+```
+
+Les prévisualisations de branche utilisent la base de production : une migration doit être **rétrocompatible** (ajouts uniquement) et appliquée avec `db:migrate:remote` **avant** de fusionner le code qui en dépend.

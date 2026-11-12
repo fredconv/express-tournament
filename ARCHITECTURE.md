@@ -58,7 +58,21 @@ Une seule origine (SPA + API) ⇒ pas de CORS, pas de cookie, configuration mini
 
 **Android** : en V1 la PWA s'installe depuis Chrome (« Ajouter à l'écran d'accueil ») et fonctionne hors ligne. Publication Play Store ultérieure via **TWA** (Bubblewrap) ou **Capacitor** avec le même code → backlog.
 
-> Les quotas gratuits Cloudflare (Workers, D1, rate limiting, Time Travel) sont à **revérifier à l'étape E0** sur la documentation officielle avant d'être considérés comme acquis.
+### Quotas gratuits vérifiés (documentation Cloudflare, 2026-11-12)
+
+| Ressource | Offre gratuite | Conséquence pour le projet |
+|---|---|---|
+| Requêtes Worker | 100 000 / jour | Seuls les appels `/api` comptent. |
+| Fichiers statiques | Gratuits et illimités | L'app (HTML/JS/CSS) ne consomme pas le quota. |
+| CPU | **10 ms par requête** | Validation serveur (Zod + `validateSchedule`) à mesurer sur un tournoi de 32 équipes en E3 ; rester sous ~5 ms. |
+| Cron Triggers | 5 par compte | 1 utilisé (purge quotidienne). |
+| D1 lectures | 5 M lignes / jour | ~1 ligne par consultation de page publique. |
+| D1 écritures | 100 000 lignes / jour | Écritures rares (publication). |
+| D1 stockage | 5 Go | Tournoi < 50 Ko → > 100 000 tournois. |
+| D1 Time Travel | Restauration à la minute ; 30 jours selon la doc générale de D1, durée exacte pour l'offre gratuite à confirmer dans le tableau de bord avant E7. | |
+| Rate Limiting binding | Fenêtre de **10 s ou 60 s uniquement**, compteur **par point de présence** Cloudflare (pas global). | Les limites se calculent à la minute (§8). |
+
+Base D1 de production : `express-tournament-db`, région WEUR, binding `DB`.
 
 ## 4. Structure du dépôt
 
@@ -229,10 +243,10 @@ Sur POST/PUT le serveur : valide Zod → `validateSchedule()` → vérifie que l
 | Fuite du code via URL / QR / logs | Le code ne figure **jamais** dans une URL (transmis en en-tête `Authorization`) ; QR = URL publique seule ; aucun log de l'en-tête ; `Referrer-Policy: no-referrer`. |
 | Vol du code par XSS (stocké en localStorage) | Aucun HTML injecté (`dangerouslySetInnerHTML` interdit), React échappe ; CSP stricte `default-src 'self'` ; aucun script tiers ; portée du code limitée à un tournoi. |
 | Énumération des tournois | Id public aléatoire 50 bits ; aucune route de liste ; pages `noindex` + `robots.txt`. |
-| Spam / abus de création | Limite de débit par IP sur POST (ex. 10/h) et PUT (ex. 120/h/tournoi) via binding Rate Limiting Workers ; taille de corps 100 Ko ; limites Zod (32 équipes, 16 terrains, longueurs). |
+| Spam / abus de création | Limite de débit par IP via binding Rate Limiting Workers (fenêtre de 60 s, compteur par point de présence) : POST ≈ 3/min, PUT ≈ 30/min par tournoi ; taille de corps 100 Ko ; limites Zod (32 équipes, 16 terrains, longueurs). |
 | Données invalides rendant la page publique illisible | Validation serveur systématique (Zod + invariants du moteur). |
 | Écrasement concurrent | Verrou optimiste `version` / `If-Match` → 409. |
-| Perte de données | D1 Time Travel (restauration point-in-time, durée selon l'offre — à vérifier) ; export JSON du tournoi par l'organisateur → backlog. |
+| Perte de données | D1 Time Travel (restauration à la minute ; durée sur l'offre gratuite à confirmer avant E7) ; export JSON du tournoi par l'organisateur → backlog. |
 | Secrets d'infrastructure | Aucun jeton Cloudflare dans GitHub (déploiement par Workers Builds, jeton géré par Cloudflare) ; aucun secret dans le bundle client ; `.dev.vars` ignoré par Git. |
 
 En-têtes appliqués par le Worker : `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Permissions-Policy` restrictive, `X-Frame-Options: DENY`, HSTS (via Cloudflare).
