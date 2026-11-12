@@ -5,10 +5,12 @@ import {
   canGenerateFinal,
   createDraft,
   type Draft,
+  exceedsTargetEnd,
   generate,
   generateAfternoon,
   generateFinal,
   isAfternoonStale,
+  isScheduleStale,
   setResult,
 } from '../../src/app/draft/model';
 import { drawPools, poolSizes } from '../../src/domain/pools';
@@ -246,6 +248,19 @@ describe('full tournament day (SPEC F10–F12)', () => {
     };
     expect(endOf(3)?.warnings.some((w) => w.kind === 'exceeds-target-end')).toBe(false);
     expect(endOf(2)?.warnings.some((w) => w.kind === 'exceeds-target-end')).toBe(true);
+  });
+
+  it('changing the target end only changes the warning, never the schedule', () => {
+    let day = generate(tournament(15, 3), 7);
+    day = setResult(day, day.schedule?.matches[0]?.id as string, [
+      { a: 21, b: 10 },
+      { a: 21, b: 12 },
+    ]);
+    const morning = day.schedule as NonNullable<Draft['schedule']>;
+    const early = { ...day, targetEndTime: '11:00' };
+    expect(isScheduleStale(early)).toBe(false);
+    expect(exceedsTargetEnd(early, morning)).toBe(morning.endMinute);
+    expect(exceedsTargetEnd({ ...day, targetEndTime: '' }, morning)).toBeNull();
   });
 });
 

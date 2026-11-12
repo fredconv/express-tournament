@@ -10,6 +10,7 @@ import {
   canGenerateAfternoon,
   canGenerateFinal,
   type Draft,
+  exceedsTargetEnd,
   generate,
   generateAfternoon,
   generateFinal,
@@ -247,7 +248,7 @@ function PhaseSection({
           )}
         </span>
       </h2>
-      <Warnings schedule={schedule} />
+      <Warnings draft={draft} schedule={schedule} />
       {pools.length > 0 && (
         <div className="standings-list">
           {pools.map((pool) => (
@@ -305,7 +306,7 @@ function GenerateButton(props: { label: string; disabled: boolean; onClick: () =
   );
 }
 
-function Warnings({ schedule }: { schedule: ScheduleResult }) {
+function Warnings({ draft, schedule }: { draft: Draft; schedule: ScheduleResult }) {
   const { warnings } = schedule;
   const backToBack = warnings.reduce(
     (n, w) => n + (w.kind === 'back-to-back' ? w.teamIds.length : 0),
@@ -313,11 +314,9 @@ function Warnings({ schedule }: { schedule: ScheduleResult }) {
   );
   const messages: string[] = [];
   if (backToBack > 0) messages.push(fr.warnings.backToBack(backToBack));
-  for (const w of warnings) {
-    if (w.kind === 'exceeds-target-end')
-      messages.push(fr.warnings.exceedsTarget(formatTime(w.endMinute)));
-    if (w.kind === 'past-midnight') messages.push(fr.warnings.pastMidnight);
-  }
+  const lateEnd = exceedsTargetEnd(draft, schedule);
+  if (lateEnd !== null) messages.push(fr.warnings.exceedsTarget(formatTime(lateEnd)));
+  if (warnings.some((w) => w.kind === 'past-midnight')) messages.push(fr.warnings.pastMidnight);
   if (messages.length === 0) return null;
   return (
     <ul className="notice notice--info">

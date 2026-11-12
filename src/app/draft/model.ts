@@ -247,14 +247,22 @@ export function timingOf(draft: Draft): Timing {
     : { ...timing, targetEndMinute: parseTime(draft.targetEndTime) };
 }
 
+/** The target end only drives a warning (`exceedsTargetEnd`), so it is not part of the key. */
 function scheduleKeyOf(draft: Draft): string {
+  const { targetEndMinute: _warningOnly, ...timing } = timingOf(draft);
   return JSON.stringify({
     teams: draft.teams.map((t) => t.id),
     start: draft.startTime,
     lunch: draft.lunchMinutes,
     seed: draft.drawSeed,
-    ...timingOf(draft),
+    ...timing,
   });
+}
+
+/** End of the phase when it is later than the current target end, else null. */
+export function exceedsTargetEnd(draft: Draft, schedule: ScheduleResult): number | null {
+  if (!isValidTime(draft.targetEndTime)) return null;
+  return schedule.endMinute > parseTime(draft.targetEndTime) ? schedule.endMinute : null;
 }
 
 /**
