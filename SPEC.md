@@ -45,8 +45,8 @@ Les critères sont vérifiables par test automatisé (TA) ou recette manuelle (R
 
 **Critères d'acceptation**
 - [ ] CA1.1 (RM) Un organisateur crée et publie un tournoi de 8 équipes / 2 terrains en moins de 5 minutes sur un smartphone Android, sans créer de compte.
-- [ ] CA1.2 (TA) Un brouillon survit à la fermeture et réouverture du navigateur.
-- [ ] CA1.3 (TA) Un brouillon non publié n'est jamais envoyé au serveur.
+- [x] CA1.2 (TA) Un brouillon survit à la fermeture et réouverture du navigateur.
+- [x] CA1.3 (TA) Un brouillon non publié n'est jamais envoyé au serveur.
 
 ### F2 — Gestion des équipes
 - Ajouter, renommer, supprimer une équipe.
@@ -54,9 +54,9 @@ Les critères sont vérifiables par test automatisé (TA) ou recette manuelle (R
 - Contraintes : 2 à 32 équipes, nom de 1 à 40 caractères, noms uniques (insensible à la casse et aux espaces de bord).
 
 **Critères d'acceptation**
-- [ ] CA2.1 (TA) Coller 10 lignes crée 10 équipes ; les lignes vides sont ignorées.
-- [ ] CA2.2 (TA) Un doublon de nom est refusé avec un message clair.
-- [ ] CA2.3 (TA) Modifier ou supprimer une équipe après génération marque le planning comme « à régénérer » ; l'ancien planning ne peut pas être publié en l'état.
+- [x] CA2.1 (TA) Coller 10 lignes crée 10 équipes ; les lignes vides sont ignorées.
+- [x] CA2.2 (TA) Un doublon de nom est refusé avec un message clair.
+- [x] CA2.3 (TA) Modifier ou supprimer une équipe après génération marque le planning comme « à régénérer » ; l'ancien planning ne peut pas être publié en l'état.
 
 ### F3 — Configuration : terrains, horaires, format de match
 - **Terrains** : 1 à 16, nommés automatiquement « Terrain 1… », renommables.
