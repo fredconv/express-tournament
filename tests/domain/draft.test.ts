@@ -7,12 +7,11 @@ import {
   draftIssues,
   generate,
   isScheduleStale,
+  matchMinutesOf,
   removeTeam,
   renameTeam,
-  resetSlotMinutes,
   setCourtCount,
   setMatchFormat,
-  setSlotMinutes,
   timingOf,
 } from '../../src/app/draft/model';
 import { createDraftStore, type KeyValueStore } from '../../src/client/storage';
@@ -80,21 +79,18 @@ describe('draft settings (SPEC F3)', () => {
     expect(setCourtCount(draft, 40, ids).courts).toHaveLength(6);
   });
 
-  it('follows the suggested slot length until the organizer overrides it', () => {
+  it('computes the match duration from the format, with no manual override', () => {
     const draft = draftWithTeams(4);
-    expect(draft.slotMinutes).toBe(22);
+    expect(matchMinutesOf(draft)).toBe(22);
     const points = setMatchFormat(draft, {
       kind: 'points',
       setCount: 2,
       pointsPerSet: 25,
       mode: 'all-sets',
     });
-    expect(points.slotMinutes).toBe(42);
-    const custom = setSlotMinutes(points, 30);
-    expect(
-      setMatchFormat(custom, { kind: 'time', setCount: 1, minutesPerSet: 15 }).slotMinutes,
-    ).toBe(30);
-    expect(resetSlotMinutes(custom).slotMinutes).toBe(42);
+    expect(matchMinutesOf(points)).toBe(42);
+    const long = setMatchFormat(draft, { kind: 'time', setCount: 5, minutesPerSet: 60 });
+    expect(draftIssues(long)).toContain('invalid-slot-minutes');
   });
 
   it('describes formats in French', () => {

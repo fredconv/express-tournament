@@ -73,14 +73,14 @@ Les critères sont vérifiables par test automatisé (TA) ou recette manuelle (R
 - **Format de match** (informatif en V1, affiché sur le planning et le PDF) :
   - *Au temps* : nombre de sets (1–5) × durée par set (1–60 min). Ex. 2 sets de 10 min.
   - *Aux points* : nombre de sets (1–5), points par set (5–50), mode « tous les sets se jouent » ou « sets gagnants », points du set décisif optionnels. Ex. 2 sets de 25 pts ; 3 sets de 15 pts ; 2 sets gagnants de 25, tie-break à 15.
-- **Durée d'un match** (minutes) : temps réservé par match sur un terrain. Calculée à partir du format (au temps : exacte ; aux points : estimation), modifiable via « Ajuster » (voir §7, D1). L'interface ne parle plus de « créneau ».
+- **Durée d'un match** (minutes) : temps réservé par match sur un terrain. Calculée à partir du format (au temps : exacte ; aux points : estimation), affichée en lecture seule : ce n'est pas un réglage (voir §7, D1 ; décision utilisateur du 2026-11-12). L'interface ne parle plus de « créneau ».
 - **Pause de midi** fixe entre la fin du matin et le début de l'après-midi (0–180 min, défaut 60).
 - **Battement** entre deux créneaux (0–30 min, défaut 5).
 - **Repos minimal** : « éviter qu'une équipe joue deux créneaux d'affilée » (activé par défaut).
 
 **Critères d'acceptation**
-- [x] CA3.1 (TA) Format au temps 2 × 10 min → durée de créneau proposée = 22 min (sets + 2 min de changement de côté), modifiable.
-- [x] CA3.2 (TA) Format aux points → une durée estimée est proposée (table §7 D1) et étiquetée « estimation ».
+- [x] CA3.1 (TA) Format au temps 2 × 10 min → durée de match calculée = 22 min (sets + 2 min de changement de côté), non modifiable.
+- [x] CA3.2 (TA) Format aux points → une durée estimée est calculée (table §7 D1) et étiquetée « estimation ».
 - [ ] CA3.3 (TA) Toute valeur hors limites est refusée côté client **et** côté serveur.
 - [x] CA3.4 (TA) Le nombre de terrains est limité à 1–6.
 
@@ -209,7 +209,7 @@ Arbitrage automatique, optimisation avancée des temps de repos (au-delà du mot
 
 | # | Décision proposée (par défaut) | Pourquoi | Bloque |
 |---|---|---|---|
-| **D1** | Une **durée de match unique** (le « créneau ») pour tous les matchs, toutes phases confondues. Au temps : sets × durée + 2 min par changement de côté. Aux points : estimation (25 pts ≈ 20 min/set, 21 pts ≈ 17, 15 pts ≈ 12) éditable. Le moteur ne connaît que cette durée. | Un match aux points n'a pas de durée fixe ; un créneau fixe garantit un planning lisible et sans chevauchement. | E1 |
+| **D1** | Une **durée de match unique** (le « créneau ») pour tous les matchs, toutes phases confondues. Au temps : sets × durée + 2 min par changement de côté. Aux points : estimation (25 pts ≈ 20 min/set, 21 pts ≈ 17, 15 pts ≈ 12) non modifiable (pas de réglage manuel depuis le 2026-11-12). Le moteur ne connaît que cette durée. | Un match aux points n'a pas de durée fixe ; un créneau fixe garantit un planning lisible et sans chevauchement. | E1 |
 | **D2** | Repos = « pas deux créneaux d'affilée si possible », jamais de créneau vide imposé, entorses signalées. _Précisé le 2026-11-12 : la durée minimale de la journée prime ; le repos départage._ | Bon compromis durée totale / fatigue sans paramétrage complexe. | E1 |
 | **D3** | Toute modification d'équipes ou de configuration après publication **régénère le planning entier** (avec avertissement). Pas de replanification partielle en V1. _v0.2 : une fois un score saisi, modifier les équipes, les terrains ou les durées exige de confirmer l'effacement des scores et des phases suivantes ; le nom des équipes et des terrains reste modifiable._ | La replanification partielle (forfait en cours de tournoi) est complexe → backlog. | E2 |
 | **D4** | Gestion propriétaire par **code de gestion** sans compte ni e-mail. Perdre l'appareil **et** le code = perdre le droit de modifier (le tournoi reste consultable, puis expire). | Zéro inscription exigée par le besoin. Récupération par e-mail → backlog. | E5 |

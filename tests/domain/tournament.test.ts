@@ -11,6 +11,7 @@ import {
   generateFinal,
   isAfternoonStale,
   isScheduleStale,
+  matchMinutesOf,
   setResult,
 } from '../../src/app/draft/model';
 import { drawPools, poolSizes } from '../../src/domain/pools';
@@ -268,7 +269,7 @@ function shape(day: Draft) {
   return {
     courtIds: day.courts.map((c) => c.id),
     startMinute: 9 * 60,
-    slotMinutes: day.slotMinutes,
+    slotMinutes: matchMinutesOf(day),
     transitionMinutes: day.transitionMinutes,
   };
 }

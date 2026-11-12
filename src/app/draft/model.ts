@@ -35,9 +35,6 @@ export interface Draft {
   date: string;
   location: string;
   matchFormat: MatchFormat;
-  /** Slot length; follows the format suggestion unless `slotMinutesCustom`. */
-  slotMinutes: number;
-  slotMinutesCustom: boolean;
   /** HH:mm */
   startTime: string;
   transitionMinutes: number;
@@ -83,8 +80,6 @@ export function createDraft(today: string, newId: IdFactory, now: string): Draft
     date: today,
     location: '',
     matchFormat: DEFAULT_FORMAT,
-    slotMinutes: suggestSlotMinutes(DEFAULT_FORMAT),
-    slotMinutesCustom: false,
     startTime: '09:00',
     transitionMinutes: 5,
     avoidBackToBack: true,
@@ -172,25 +167,13 @@ export function renameCourt(draft: Draft, id: string, name: string): Draft {
   return { ...draft, courts: draft.courts.map((c) => (c.id === id ? { ...c, name } : c)) };
 }
 
-/** Changing the format refreshes the slot length unless the organizer set it by hand. */
 export function setMatchFormat(draft: Draft, matchFormat: MatchFormat): Draft {
-  return {
-    ...draft,
-    matchFormat,
-    slotMinutes: draft.slotMinutesCustom ? draft.slotMinutes : suggestSlotMinutes(matchFormat),
-  };
+  return { ...draft, matchFormat };
 }
 
-export function setSlotMinutes(draft: Draft, minutes: number): Draft {
-  return { ...draft, slotMinutes: minutes, slotMinutesCustom: true };
-}
-
-export function resetSlotMinutes(draft: Draft): Draft {
-  return {
-    ...draft,
-    slotMinutes: suggestSlotMinutes(draft.matchFormat),
-    slotMinutesCustom: false,
-  };
+/** Time reserved on a court per match: always computed from the format, never edited (D1). */
+export function matchMinutesOf(draft: Draft): number {
+  return suggestSlotMinutes(draft.matchFormat);
 }
 
 // ---------- Validation and generation (SPEC F4, CA2.3) ----------
@@ -216,7 +199,7 @@ export function draftIssues(draft: Draft): DraftIssue[] {
   if (draft.targetEndTime !== '' && !isValidTime(draft.targetEndTime)) {
     issues.push('invalid-target-end');
   }
-  if (!isIntIn(draft.slotMinutes, LIMITS.minSlotMinutes, LIMITS.maxSlotMinutes)) {
+  if (!isIntIn(matchMinutesOf(draft), LIMITS.minSlotMinutes, LIMITS.maxSlotMinutes)) {
     issues.push('invalid-slot-minutes');
   }
   if (!isIntIn(draft.transitionMinutes, 0, LIMITS.maxTransitionMinutes)) {
@@ -238,7 +221,7 @@ type Timing = Omit<PoolScheduleInput, 'pools' | 'startMinute' | 'idPrefix' | 'fi
 export function timingOf(draft: Draft): Timing {
   const timing: Timing = {
     courtIds: draft.courts.map((c) => c.id),
-    slotMinutes: draft.slotMinutes,
+    slotMinutes: matchMinutesOf(draft),
     transitionMinutes: draft.transitionMinutes,
     avoidBackToBack: draft.avoidBackToBack,
   };

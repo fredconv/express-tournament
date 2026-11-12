@@ -1,14 +1,13 @@
 import { newId } from '../../client/ids';
-import { isSlotEstimate, suggestSlotMinutes } from '../../domain/format';
+import { isSlotEstimate } from '../../domain/format';
 import { LIMITS } from '../../domain/limits';
 import type { MatchFormat } from '../../domain/types';
 import {
   MAX_LUNCH_MINUTES,
+  matchMinutesOf,
   renameCourt,
-  resetSlotMinutes,
   setCourtCount,
   setMatchFormat,
-  setSlotMinutes,
 } from '../draft/model';
 import { fr } from '../i18n/fr';
 import { NumberField, OptionalNumberField } from './NumberField';
@@ -28,7 +27,6 @@ const COURT_CHOICES = Array.from(
 
 export function SettingsStep({ draft, update }: StepProps) {
   const format = draft.matchFormat;
-  const suggested = suggestSlotMinutes(format);
   const changeFormat = (next: MatchFormat) => update((d) => setMatchFormat(d, next));
 
   return (
@@ -107,25 +105,12 @@ export function SettingsStep({ draft, update }: StepProps) {
             onChange={(e) => update((d) => ({ ...d, startTime: e.target.value }))}
           />
         </label>
-        <NumberField
-          label={fr.settings.slot}
-          value={draft.slotMinutes}
-          min={LIMITS.minSlotMinutes}
-          max={LIMITS.maxSlotMinutes}
-          suffix={fr.common.minutes}
-          onChange={(m) => update((d) => setSlotMinutes(d, m))}
-        />
-        <p className="muted small">
-          {fr.settings.slotHelp} {fr.settings.slotSuggested(suggested, isSlotEstimate(format))}{' '}
-          {draft.slotMinutes !== suggested && (
-            <button
-              type="button"
-              className="link-button"
-              onClick={() => update((d) => resetSlotMinutes(d))}
-            >
-              {fr.settings.useSuggestion}
-            </button>
-          )}
+        <p className="field">
+          <span className="field__label">{fr.settings.slot}</span>
+          <span>
+            <strong>{fr.settings.slotValue(matchMinutesOf(draft))}</strong>{' '}
+            <span className="muted small">{fr.settings.slotHelp(isSlotEstimate(format))}</span>
+          </span>
         </p>
         <NumberField
           label={fr.settings.transition}

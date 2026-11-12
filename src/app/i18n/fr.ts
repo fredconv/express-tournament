@@ -66,10 +66,11 @@ export const fr = {
     bestOf: 'Sets gagnants',
     decidingSet: 'Points du dernier set (optionnel)',
     slot: 'Durée d’un match',
-    slotHelp: 'Temps réservé sur le terrain pour un match, calculé d’après le format.',
-    slotSuggested: (m: number, estimate: boolean) =>
-      `Calcul : ${m} min${estimate ? ' (estimation pour un match aux points, ajustable)' : ''}`,
-    useSuggestion: 'Revenir au calcul',
+    slotValue: (m: number) => `${m} min`,
+    slotHelp: (estimate: boolean) =>
+      estimate
+        ? 'Estimation calculée d’après le format (sets et points), changements de côté compris.'
+        : 'Calculée d’après le format (sets × durée), changements de côté compris.',
     transition: 'Rotation entre deux matchs',
     lunch: 'Pause de midi',
     rest: 'Éviter qu’une équipe joue deux matchs d’affilée',
@@ -137,7 +138,7 @@ export const fr = {
     'not-enough-teams': 'ajoutez au moins 2 équipes',
     'invalid-start-time': 'indiquez une heure de début valide',
     'invalid-target-end': 'corrigez l’heure de fin souhaitée',
-    'invalid-slot-minutes': 'la durée d’un match doit être entre 5 et 240 min',
+    'invalid-slot-minutes': 'avec ce format, un match durerait moins de 5 min ou plus de 240 min',
     'invalid-transition': 'la rotation doit être entre 0 et 30 min',
     'invalid-lunch': 'la pause de midi doit être entre 0 et 180 min',
     'court-name-missing': 'chaque terrain doit avoir un nom',
