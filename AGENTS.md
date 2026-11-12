@@ -81,6 +81,7 @@ _(À ajouter quand l'étape le crée : `test:e2e` (E8). Mettre à jour cette lis
 ## 9. Git
 
 - `main` toujours déployable ; travail sur branches `e<N>-<sujet>` (ex. `e1-schedule-engine`) ou `fix-<sujet>`.
+- Une étape = une branche = une PR, validée puis fusionnée (squash) avant de commencer la suivante ; pas de PR en attente ni de branches dépendantes.
 - Commits petits, au format Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `chore:`, `refactor:`).
 - Fusion seulement si la CI est verte. Pas de `--force` sur `main`, pas de `--no-verify`.
 - Git est la source de vérité : une décision non commitée dans SPEC/ARCHITECTURE/BACKLOG n'existe pas.

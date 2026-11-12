@@ -72,8 +72,9 @@ Dans l'éditeur local existant, sans nouvelle couche d'architecture : quelques f
 - Un seul planning chronologique de la journée (matin, pause, après-midi, finale).
 
 **DoD**
-- [ ] CA3.4, CA4.6, CA10.1 à CA10.3, CA11.1, CA11.2, CA12.1 à CA12.3 automatisés et verts.
-- [ ] Parcours complet (création → tirage → scores → après-midi → finale) faisable en viewport 375 × 812.
+- [x] CA3.4, CA4.6, CA10.1 à CA10.3, CA11.1, CA11.2, CA12.1 à CA12.3 automatisés et verts. _(tests/domain/tournament.test.ts, journée complète 13 et 15 équipes)_
+- [x] Parcours complet (création → tirage → scores → après-midi → finale) faisable en viewport 375 × 812. _(prévisualisation, 2026-11-12 : 15 équipes / 3 terrains et 13 équipes / 2 terrains ; une partie des scores injectée en stockage local pour aller vite, saisie, nul, set décisif de la finale et alerte de fin testés dans l'interface ; aucune erreur console, pas de défilement horizontal)_
+- [ ] RM sur un vrai Android (en attente de l'utilisateur).
 
 ## E4 — Publication, page publique, QR et impression (M)
 

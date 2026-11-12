@@ -1,6 +1,6 @@
 # SPEC — Tournoi Express (nom de travail)
 
-Version 0.3 — 2026-11-12 — **statut : MVP recentré à la demande de l'utilisateur le 2026-11-12** (poules du matin, scores, après-midi, finale simple, publication). Décisions D10–D13 : réglages par défaut proposés, à confirmer.
+Version 0.3 — 2026-11-12 — **statut : MVP recentré à la demande de l'utilisateur le 2026-11-12** (poules du matin, scores, après-midi, finale simple, publication). Décisions D10–D13 : réglages par défaut, précisés par l'utilisateur le 2026-11-12 (nul selon le format, moyennes par match entre poules inégales, finale même en cas de revanche).
 
 **Règle de périmètre** : avant d'ajouter une fonctionnalité, se demander si elle est indispensable pour mener un vrai tournoi avec la V1. Sinon → BACKLOG.md. Aucun élargissement sans accord explicite de l'utilisateur.
 
@@ -82,7 +82,7 @@ Les critères sont vérifiables par test automatisé (TA) ou recette manuelle (R
 - [x] CA3.1 (TA) Format au temps 2 × 10 min → durée de créneau proposée = 22 min (sets + 2 min de changement de côté), modifiable.
 - [x] CA3.2 (TA) Format aux points → une durée estimée est proposée (table §7 D1) et étiquetée « estimation ».
 - [ ] CA3.3 (TA) Toute valeur hors limites est refusée côté client **et** côté serveur.
-- [ ] CA3.4 (TA) Le nombre de terrains est limité à 1–6.
+- [x] CA3.4 (TA) Le nombre de terrains est limité à 1–6.
 
 ### F4 — Génération automatique du calendrier d'une phase de poules
 - Dans chaque poule, chaque équipe rencontre chaque autre équipe **exactement une fois** ; toutes les poules d'une phase se jouent en même temps et se partagent les terrains.
@@ -97,7 +97,7 @@ Les critères sont vérifiables par test automatisé (TA) ou recette manuelle (R
 - [x] CA4.3 (TA) Heures de début/fin cohérentes : début(créneau k) = début + k × (durée + battement).
 - [x] CA4.4 (TA) Génération de 32 équipes / 16 terrains en moins de 200 ms sur un smartphone milieu de gamme (mesuré < 50 ms en Node).
 - [x] CA4.5 (TA) Si l'heure de fin cible est dépassée, une alerte indique l'heure de fin réelle.
-- [ ] CA4.6 (TA) Plusieurs poules : aucun match entre équipes de poules différentes, chaque paire d'une poule exactement une fois, aucun conflit équipe/terrain.
+- [x] CA4.6 (TA) Plusieurs poules : aucun match entre équipes de poules différentes, chaque paire d'une poule exactement une fois, aucun conflit équipe/terrain.
 
 ### F5 — Repos des équipes et absence de conflits
 _Moteur existant (E1) conservé tel quel ; aucune optimisation supplémentaire en V1._
@@ -117,30 +117,31 @@ _Moteur existant (E1) conservé tel quel ; aucune optimisation supplémentaire e
 - Toutes les poules se jouent en même temps sur les terrains partagés (F4).
 
 **Critères d'acceptation**
-- [ ] CA10.1 (TA) Pour N de 3 à 32 : tailles de poule dans 3–5 (N < 6 : une poule de N), écart ≤ 1.
-- [ ] CA10.2 (TA) 13, 14, 15 équipes → 5-4-4, 4-4-3-3, 4-4-4-3.
-- [ ] CA10.3 (TA) Même graine → même tirage ; chaque équipe est dans exactement une poule.
+- [x] CA10.1 (TA) Pour N de 3 à 32 : tailles de poule dans 3–5 (N < 6 : une poule de N), écart ≤ 1.
+- [x] CA10.2 (TA) 13, 14, 15 équipes → 5-4-4, 4-4-3-3, 4-4-4-3.
+- [x] CA10.3 (TA) Même graine → même tirage ; chaque équipe est dans exactement une poule.
 
 ### F11 — Scores et classements
 - L'organisateur saisit le score de chaque match set par set ; il peut le corriger ou l'effacer.
-- Contrôles simples : nombre de sets compatible avec le format, pas de set à égalité, la finale doit avoir un vainqueur.
+- Contrôles simples : nombre de sets compatible avec le format, pas de set à égalité. Un match nul n'est possible que si le format le permet (tous les sets joués, en nombre pair) ; jamais en « sets gagnants ». La finale doit avoir un vainqueur : après une égalité, un set décisif est saisi.
 - Classement de poule (D11) : points (victoire 2, nul 1, défaite 0) par match joué, puis différence de sets par match, puis différence de points par match, puis ordre du tirage.
 
 **Critères d'acceptation**
-- [ ] CA11.1 (TA) Classement correct sur des cas de référence (égalités, match nul, poule incomplète).
-- [ ] CA11.2 (TA) Un score incohérent est refusé avec un message clair.
+- [x] CA11.1 (TA) Classement correct sur des cas de référence (égalités, match nul, poule incomplète).
+- [x] CA11.2 (TA) Un score incohérent est refusé avec un message clair.
 
 ### F12 — Après-midi et finale
 - « Générer l'après-midi » quand tous les matchs du matin ont un score.
 - Classement général : rang dans la poule, puis critères F11 entre équipes de même rang.
 - Poules de l'après-midi par blocs consécutifs de ce classement (D12), mêmes tailles que la règle du matin ; tout le monde joue. Elles commencent après la pause de midi.
-- Finale simple : 1ᵉʳ contre 2ᵉ de la première poule de l'après-midi, sur le terrain 1, après le dernier match de l'après-midi (D13).
+- Finale simple : 1ᵉʳ contre 2ᵉ de la première poule de l'après-midi (même s'ils se sont déjà rencontrés), sur le terrain 1, après le dernier match de l'après-midi (D13).
+- L'heure de fin souhaitée ne sert qu'à afficher une alerte sur chaque phase qui la dépasse ; la modifier ne régénère rien.
 - Modifier un score du matin après génération de l'après-midi affiche « après-midi à régénérer ».
 
 **Critères d'acceptation**
-- [ ] CA12.1 (TA) Pour N de 6 à 32 : chaque équipe est dans exactement une poule de l'après-midi et y joue au moins 2 matchs.
-- [ ] CA12.2 (TA) La première poule de l'après-midi contient les meilleures équipes du classement général.
-- [ ] CA12.3 (TA) La finale oppose les deux premiers de la première poule de l'après-midi, une fois tous ses matchs saisis.
+- [x] CA12.1 (TA) Pour N de 6 à 32 : chaque équipe est dans exactement une poule de l'après-midi et y joue au moins 2 matchs.
+- [x] CA12.2 (TA) La première poule de l'après-midi contient les meilleures équipes du classement général.
+- [x] CA12.3 (TA) La finale oppose les deux premiers de la première poule de l'après-midi, une fois tous ses matchs saisis.
 
 ### F6 — Consultation du planning (PC et smartphone)
 - Page publique `/t/{idPublic}` lisible sans connexion de compte.
