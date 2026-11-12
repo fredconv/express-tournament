@@ -81,7 +81,7 @@ Les critères sont vérifiables par test automatisé (TA) ou recette manuelle (R
 **Critères d'acceptation**
 - [x] CA3.1 (TA) Format au temps 2 × 10 min → durée de match calculée = 22 min (sets + 2 min de changement de côté), non modifiable.
 - [x] CA3.2 (TA) Format aux points → une durée estimée est calculée (table §7 D1) et étiquetée « estimation ».
-- [ ] CA3.3 (TA) Toute valeur hors limites est refusée côté client **et** côté serveur.
+- [x] CA3.3 (TA) Toute valeur hors limites est refusée côté client **et** côté serveur.
 - [x] CA3.4 (TA) Le nombre de terrains est limité à 1–6.
 
 ### F4 — Génération automatique du calendrier d'une phase de poules
@@ -153,7 +153,7 @@ _Moteur existant (E1) conservé tel quel ; aucune optimisation supplémentaire e
 
 **Critères d'acceptation**
 - [ ] CA6.1 (RM, viewport 360 × 800) Le planning d'un tournoi de 12 équipes s'affiche sans défilement horizontal.
-- [ ] CA6.2 (TA) Le filtre équipe est conservé après rechargement.
+- [x] CA6.2 (TA) Le filtre équipe est conservé après rechargement.
 - [ ] CA6.3 (RM) Sur Android (Chrome) en 4G simulée, planning lisible < 3 s après ouverture du lien.
 
 ### F7 — Export PDF imprimable
@@ -181,10 +181,10 @@ _Moteur existant (E1) conservé tel quel ; aucune optimisation supplémentaire e
 - L'organisateur est invité à copier / sauvegarder son code (copier, partager vers soi-même, afficher).
 
 **Critères d'acceptation**
-- [ ] CA9.1 (TA) Toute requête d'écriture sans code valide → 401 ; avec le code d'un autre tournoi → 401.
-- [ ] CA9.2 (TA) Le code de gestion n'apparaît ni dans une URL, ni dans le QR, ni dans la réponse publique, ni dans les journaux serveur ; seul son hachage est stocké.
-- [ ] CA9.3 (TA) Publication concurrente : la seconde écriture basée sur une version obsolète → 409, l'interface affiche un message clair.
-- [ ] CA9.4 (TA) Un tournoi inconnu renvoie 404.
+- [x] CA9.1 (TA) Toute requête d'écriture sans code valide → 401 ; avec le code d'un autre tournoi → 401.
+- [x] CA9.2 (TA) Le code de gestion n'apparaît ni dans une URL, ni dans le QR, ni dans la réponse publique, ni dans les journaux serveur ; seul son hachage est stocké.
+- [x] CA9.3 (TA) Publication concurrente : la seconde écriture basée sur une version obsolète → 409, l'interface affiche un message clair.
+- [x] CA9.4 (TA) Un tournoi inconnu renvoie 404.
 
 ## 5. Exigences non fonctionnelles
 

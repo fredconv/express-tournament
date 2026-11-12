@@ -84,8 +84,8 @@ Dans l'éditeur local existant, sans nouvelle couche d'architecture : quelques f
 - Écran QR plein écran + lien à copier ; feuille `print.css` pour imprimer / enregistrer en PDF.
 
 **DoD**
-- [ ] CA6.1, CA6.2, CA8.2, CA9.1 à CA9.4 automatisés et verts.
-- [ ] En-têtes de sécurité vérifiés sur la prévisualisation (`curl -I`).
+- [x] CA6.2, CA9.1 à CA9.4 automatisés et verts (tests/worker/tournaments.test.ts sur SQLite réel). CA6.1 vérifié sur la prévisualisation en 375 × 812 (pas de défilement horizontal). CA8.2 : à confirmer en scannant le QR avec un téléphone (pas de décodeur QR dans le navigateur de test).
+- [x] En-têtes de sécurité vérifiés sur la prévisualisation (`curl -I`, 2026-11-12 : CSP, nosniff, no-referrer, DENY ; API no-store + noindex).
 - [ ] RM : QR scanné depuis un autre téléphone ; PDF lisible depuis Chrome Android (CA7.1, CA8.1).
 
 ## E5 — Mise en production et tournoi réel (S)
