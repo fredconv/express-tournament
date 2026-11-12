@@ -24,13 +24,15 @@ npm run check      # typecheck + lint + tests + build
 
 Cloudflare Workers Builds est relié au dépôt GitHub : chaque push sur `main` construit et déploie le Worker `express-tournament`.
 
-Réglages attendus dans Cloudflare (Worker → Settings → Build) :
+Réglages attendus dans Cloudflare (Worker → Settings → Builds). Les onglets **Production** et **Previews Base** ont chacun leurs propres réglages :
 
-| Réglage | Valeur |
-|---|---|
-| Build command | `npm run build` |
-| Deploy command | `npx wrangler deploy` |
-| Root directory | `/` |
+| Réglage | Production (`main`) | Previews Base (autres branches) |
+|---|---|---|
+| Build command | `npm run build` | `npm run build` |
+| Deploy / Preview command | `npx wrangler deploy` | `npx wrangler preview` |
+| Root directory | `/` | `/` |
+
+Sans build command, Wrangler échoue avec « The `assets` property … is missing the required `directory` property ».
 
 GitHub Actions (`.github/workflows/ci.yml`) exécute les vérifications sur chaque push et pull request ; il ne déploie pas.
 
