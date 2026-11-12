@@ -54,8 +54,8 @@ Bloqué par : D3.
 - Vue planning (composant réutilisé par la page publique) : liste mobile, grille PC.
 
 **DoD**
-- [ ] CA1.2, CA1.3, CA2.1 à CA2.3, CA3.3 (partie client) verts.
-- [ ] Parcours P1 jusqu'à l'aperçu réalisable en mode avion.
+- [x] CA1.2, CA1.3, CA2.1 à CA2.3, CA3.3 (partie client) verts. _(tests/domain/draft.test.ts)_
+- [ ] Parcours P1 jusqu'à l'aperçu réalisable en mode avion. _(aucun appel réseau dans l'éditeur ; à confirmer sur téléphone — le cache hors ligne de l'app arrive en E5)_
 - [ ] RM : 8 équipes / 2 terrains configurés en < 4 min sur Android par une personne qui découvre l'app.
 
 ## E3 — API, persistance et gestion propriétaire (M)
