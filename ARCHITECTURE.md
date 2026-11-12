@@ -169,7 +169,7 @@ function generateSchedule(input: ScheduleInput): {
 
 Le moteur est testé sans navigateur : tests unitaires + tests de propriétés exhaustifs (N 2..32 × C 1..16, repos activé et désactivé) + cas de référence figés (`tests/domain/reference.test.ts`) + test d'architecture (pureté de `src/domain`). Si la qualité du glouton est insuffisante sur un cas réel, on améliore `assignSlots.ts` seul, le contrat ne change pas.
 
-Mesures (Node, 2026-11-12) : 32 équipes / 16 terrains < 1 ms ; pire cas observé 32 équipes / 8 terrains ≈ 75 ms. Limite connue : 8 équipes / 3 terrains garde une série de 4 matchs pour une équipe (BACKLOG A19).
+Mesures (Node, 2026-11-12) : 32 équipes / 16 terrains < 1 ms ; budget de calcul plafonné (rejeux ≤ 400 000 opérations) : toutes les tailles < 200 ms (test de performance hors couverture). Limite connue : 8 équipes / 3 terrains garde une série de 4 matchs pour une équipe (BACKLOG A19).
 
 ## 6. Modèle de données
 

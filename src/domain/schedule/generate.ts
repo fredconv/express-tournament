@@ -8,7 +8,7 @@ import { type Pairing, roundRobin } from './roundRobin';
 /** Maximum extra tie-break orders tried when rest is enabled. */
 export const REST_ATTEMPTS = 60;
 /** Caps attempts × slots × pairings so generation stays instant on a phone. */
-const WORK_BUDGET = 800_000;
+const WORK_BUDGET = 400_000;
 const SEED = 20261112;
 
 /**

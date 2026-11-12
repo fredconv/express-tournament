@@ -116,7 +116,7 @@ describe('generateSchedule — times and warnings', () => {
   });
 });
 
-describe('generateSchedule — determinism and performance', () => {
+describe('generateSchedule — determinism', () => {
   it('returns the same schedule for the same input', () => {
     const sizes = [
       [5, 2],
@@ -129,6 +129,9 @@ describe('generateSchedule — determinism and performance', () => {
     }
   });
 
+});
+
+describe.skipIf(import.meta.env.PERF_TESTS === 'off')('generateSchedule — performance', () => {
   it('CA4.4: 32 teams / 16 courts in under 50 ms', () => {
     const start = performance.now();
     schedule(32, 16);
