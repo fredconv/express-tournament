@@ -7,13 +7,12 @@ import {
   draftIssues,
   generate,
   isScheduleStale,
+  matchMinutesOf,
   removeTeam,
   renameTeam,
-  resetSlotMinutes,
-  scheduleInputOf,
   setCourtCount,
   setMatchFormat,
-  setSlotMinutes,
+  timingOf,
 } from '../../src/app/draft/model';
 import { createDraftStore, type KeyValueStore } from '../../src/client/storage';
 
@@ -67,7 +66,7 @@ describe('draft teams (SPEC F2)', () => {
 });
 
 describe('draft settings (SPEC F3)', () => {
-  it('keeps court count within 1–16 and names new courts', () => {
+  it('keeps court count within 1–6 and names new courts', () => {
     const ids = counterIds();
     const draft = createDraft('2026-12-05', ids, 'now');
     expect(setCourtCount(draft, 4, ids).courts.map((c) => c.name)).toEqual([
@@ -77,24 +76,21 @@ describe('draft settings (SPEC F3)', () => {
       'Terrain 4',
     ]);
     expect(setCourtCount(draft, 0, ids).courts).toHaveLength(1);
-    expect(setCourtCount(draft, 40, ids).courts).toHaveLength(16);
+    expect(setCourtCount(draft, 40, ids).courts).toHaveLength(6);
   });
 
-  it('follows the suggested slot length until the organizer overrides it', () => {
+  it('computes the match duration from the format, with no manual override', () => {
     const draft = draftWithTeams(4);
-    expect(draft.slotMinutes).toBe(22);
+    expect(matchMinutesOf(draft)).toBe(22);
     const points = setMatchFormat(draft, {
       kind: 'points',
       setCount: 2,
       pointsPerSet: 25,
       mode: 'all-sets',
     });
-    expect(points.slotMinutes).toBe(42);
-    const custom = setSlotMinutes(points, 30);
-    expect(
-      setMatchFormat(custom, { kind: 'time', setCount: 1, minutesPerSet: 15 }).slotMinutes,
-    ).toBe(30);
-    expect(resetSlotMinutes(custom).slotMinutes).toBe(42);
+    expect(matchMinutesOf(points)).toBe(42);
+    const long = setMatchFormat(draft, { kind: 'time', setCount: 5, minutesPerSet: 60 });
+    expect(draftIssues(long)).toContain('invalid-slot-minutes');
   });
 
   it('describes formats in French', () => {
@@ -127,16 +123,16 @@ describe('draft generation (SPEC F4, CA2.3)', () => {
     );
   });
 
-  it('builds the engine input from the draft', () => {
-    const input = scheduleInputOf({ ...draftWithTeams(4), targetEndTime: '12:30' });
-    expect(input).toMatchObject({ startMinute: 540, slotMinutes: 22, targetEndMinute: 750 });
-    expect(input.teamIds).toHaveLength(4);
+  it('builds the shared timing from the draft', () => {
+    const timing = timingOf({ ...draftWithTeams(4), targetEndTime: '12:30' });
+    expect(timing).toMatchObject({ slotMinutes: 22, transitionMinutes: 5, targetEndMinute: 750 });
+    expect(timing.courtIds).toHaveLength(2);
   });
 
   it('CA2.3: any change to teams or settings marks the schedule stale', () => {
     const ids = counterIds();
-    const generated = generate(draftWithTeams(6));
-    expect(generated.schedule?.matches).toHaveLength(15);
+    const generated = generate(draftWithTeams(6), 1);
+    expect(generated.schedule?.matches).toHaveLength(6);
     expect(isScheduleStale(generated)).toBe(false);
     expect(isScheduleStale({ ...generated, name: 'Autre nom' })).toBe(false);
     expect(isScheduleStale(addTeams(generated, 'Nouvelle', ids).draft)).toBe(true);
@@ -146,7 +142,7 @@ describe('draft generation (SPEC F4, CA2.3)', () => {
   });
 
   it('refuses to generate an incomplete draft', () => {
-    expect(() => generate(draftWithTeams(1))).toThrow();
+    expect(() => generate(draftWithTeams(1), 1)).toThrow();
   });
 });
 

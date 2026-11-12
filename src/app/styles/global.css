@@ -261,6 +261,10 @@ a {
   padding-left: 2rem;
 }
 
+.notice .button {
+  margin-top: 0.5rem;
+}
+
 /* Home */
 .card-list {
   list-style: none;
@@ -373,7 +377,7 @@ a {
   opacity: 0.55;
 }
 
-.planning__summary {
+.planning__summary p {
   margin: 0;
 }
 
@@ -457,13 +461,106 @@ a {
   font-size: 0.8rem;
 }
 
+/* Phases, standings, scores */
+.phase {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.standings-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.standings {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  font-size: 0.9rem;
+}
+
+.standings caption {
+  text-align: left;
+  font-weight: 700;
+  padding: 0.25rem 0;
+}
+
+.standings th,
+.standings td {
+  padding: 0.3rem 0.4rem;
+  border-bottom: 1px solid var(--color-border);
+  text-align: right;
+}
+
+.standings th[scope="row"],
+.standings thead th:nth-child(2) {
+  text-align: left;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.team--winner {
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+.score-link {
+  justify-self: start;
+  min-height: var(--tap);
+}
+
+.score-form {
+  display: grid;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.score-form__grid {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.score-form__team {
+  font-size: 0.8rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.score-form__label {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.input--score {
+  text-align: center;
+}
+
+.score-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.notice--success {
+  background: #e3f5e9;
+  border-color: #9fd6b2;
+  color: var(--color-ok);
+  font-weight: 700;
+}
+
 @media (min-width: 48rem) {
   .page--editor {
     max-width: 64rem;
   }
 
-  .schedule-list {
+  .schedule-list:not(.schedule-list--always) {
     display: none;
+  }
+
+  .standings-list {
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
   }
 
   .schedule-grid-wrapper {

@@ -16,6 +16,12 @@ export function makeInput(teams: number, courts: number, overrides: Partial<Sche
   } satisfies ScheduleInput;
 }
 
+/** Validation shape of a single-pool input. */
+export function shapeOf(input: ScheduleInput) {
+  const { teamIds, ...rest } = input;
+  return { ...rest, pools: [{ id: 'p1', teamIds }] };
+}
+
 export function schedule(teams: number, courts: number, overrides: Partial<ScheduleInput> = {}) {
   return generateSchedule(makeInput(teams, courts, overrides));
 }

@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { validateSchedule } from '../../src/domain/schedule/validate';
 import type { ScheduledMatch } from '../../src/domain/types';
-import { makeInput, schedule } from './helpers';
+import { makeInput, schedule, shapeOf } from './helpers';
 
 const input = makeInput(4, 2);
 const generated = schedule(4, 2).matches;
 
 function codes(matches: ScheduledMatch[]) {
-  return validateSchedule({ ...input, matches }).map((e) => e.code);
+  return validateSchedule({ ...shapeOf(input), matches }).map((e) => e.code);
 }
 
 function patch(index: number, change: Partial<ScheduledMatch>) {

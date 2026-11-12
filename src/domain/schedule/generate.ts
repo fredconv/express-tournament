@@ -1,9 +1,15 @@
 import { LIMITS } from '../limits';
 import { MINUTES_PER_DAY } from '../time';
-import type { ScheduledMatch, ScheduleInput, ScheduleResult, ScheduleWarning } from '../types';
+import type {
+  PoolScheduleInput,
+  ScheduledMatch,
+  ScheduleInput,
+  ScheduleResult,
+  ScheduleWarning,
+} from '../types';
 import { type AssignResult, assignSlots } from './assignSlots';
 import { seededRandom, shuffled } from './random';
-import { type Pairing, roundRobin } from './roundRobin';
+import { type Pairing, poolPairings } from './roundRobin';
 
 /** Maximum extra tie-break orders tried when rest is enabled. */
 export const REST_ATTEMPTS = 60;
@@ -16,20 +22,32 @@ const SEED = 20261112;
  * spread over time slots and courts. Pure and deterministic.
  */
 export function generateSchedule(input: ScheduleInput): ScheduleResult {
+  const { teamIds, ...rest } = input;
+  return schedulePools({ ...rest, pools: [{ id: 'p1', teamIds }] });
+}
+
+/**
+ * Round robin inside each pool, all pools sharing the courts (SPEC F4).
+ * A knockout round is a set of two-team pools. Pure and deterministic.
+ */
+export function schedulePools(input: PoolScheduleInput): ScheduleResult {
   assertValidInput(input);
 
-  const pairings = roundRobin(input.teamIds);
+  const pairings = poolPairings(input.pools);
   const { assignments, slotCount, backToBack } = input.avoidBackToBack
     ? bestRestedAssignment(pairings, input.courtIds.length)
     : assignSlots(pairings, input.courtIds.length, false);
 
   const step = input.slotMinutes + input.transitionMinutes;
+  const prefix = input.idPrefix ?? 'm';
+  const first = input.firstNumber ?? 1;
   const ordered = [...assignments].sort((x, y) => x.slot - y.slot || x.courtIndex - y.courtIndex);
   const matches: ScheduledMatch[] = ordered.map((a, index) => {
     const startMinute = input.startMinute + a.slot * step;
     return {
-      id: `m${index + 1}`,
-      number: index + 1,
+      id: `${prefix}${first + index}`,
+      poolId: a.pairing.poolId,
+      number: first + index,
       slot: a.slot,
       courtId: input.courtIds[a.courtIndex] as string,
       teamAId: a.pairing.teamAId,
@@ -90,39 +108,54 @@ function countBackToBack(result: AssignResult): number {
  * True when both lower bounds are reached for this slot layout:
  * - back-to-backs: when two consecutive slots need more teams than exist, the
  *   overlap must play twice in a row;
- * - longest consecutive run (see below).
+ * - longest consecutive run: a team with m matches and r rests cannot have a run
+ *   shorter than ceil(m / (r + 1)).
  */
 function isRestOptimal(result: AssignResult, pairings: readonly Pairing[]): boolean {
-  const teamCount = new Set(pairings.flatMap((p) => [p.teamAId, p.teamBId])).size;
+  const matchesPerTeam = new Map<string, number>();
+  for (const p of pairings) {
+    for (const t of [p.teamAId, p.teamBId]) matchesPerTeam.set(t, (matchesPerTeam.get(t) ?? 0) + 1);
+  }
+  const teamCount = matchesPerTeam.size;
   const playing = new Array<number>(result.slotCount).fill(0);
   for (const a of result.assignments) playing[a.slot] = (playing[a.slot] ?? 0) + 2;
   let lowerBound = 0;
   for (let s = 1; s < playing.length; s++) {
     lowerBound += Math.max(0, (playing[s] ?? 0) + (playing[s - 1] ?? 0) - teamCount);
   }
-  // Each team plays N−1 matches and rests the other slots; with r rests the longest
-  // run cannot be shorter than ceil((N−1) / (r + 1)).
-  const matchesPerTeam = teamCount - 1;
-  const rests = result.slotCount - matchesPerTeam;
-  const streakBound = Math.ceil(matchesPerTeam / (rests + 1));
+  let streakBound = 1;
+  for (const matches of matchesPerTeam.values()) {
+    const rests = result.slotCount - matches;
+    streakBound = Math.max(streakBound, Math.ceil(matches / (rests + 1)));
+  }
   return countBackToBack(result) <= lowerBound && result.longestStreak <= streakBound;
 }
 
-function assertValidInput(input: ScheduleInput): void {
-  const { teamIds, courtIds } = input;
+function assertValidInput(input: PoolScheduleInput): void {
+  const { pools, courtIds } = input;
+  const teamIds = pools.flatMap((p) => p.teamIds);
   if (teamIds.length < LIMITS.minTeams || teamIds.length > LIMITS.maxTeams) {
     throw new RangeError(`Team count must be ${LIMITS.minTeams}–${LIMITS.maxTeams}`);
+  }
+  if (pools.some((p) => p.teamIds.length < 2)) {
+    throw new RangeError('Every pool needs at least two teams');
   }
   if (courtIds.length < LIMITS.minCourts || courtIds.length > LIMITS.maxCourts) {
     throw new RangeError(`Court count must be ${LIMITS.minCourts}–${LIMITS.maxCourts}`);
   }
-  if (new Set(teamIds).size !== teamIds.length || new Set(courtIds).size !== courtIds.length) {
-    throw new RangeError('Team and court ids must be unique');
+  const poolIds = pools.map((p) => p.id);
+  if (
+    new Set(teamIds).size !== teamIds.length ||
+    new Set(courtIds).size !== courtIds.length ||
+    new Set(poolIds).size !== poolIds.length
+  ) {
+    throw new RangeError('Team, pool and court ids must be unique');
   }
   const minutes: [string, number][] = [
     ['startMinute', input.startMinute],
     ['slotMinutes', input.slotMinutes],
     ['transitionMinutes', input.transitionMinutes],
+    ['firstNumber', input.firstNumber ?? 1],
   ];
   for (const [name, value] of minutes) {
     if (!Number.isInteger(value) || value < 0) {
