@@ -14,7 +14,7 @@ export type MatchFormat =
       pointsPerSet: number;
       mode: 'all-sets' | 'best-of';
       /** Points of the last (deciding) set, when different. */
-      decidingSetPoints?: number;
+      decidingSetPoints?: number | undefined;
     };
 
 export interface ScheduleInput {
