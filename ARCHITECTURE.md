@@ -72,7 +72,7 @@ Une seule origine (SPA + API) ⇒ pas de CORS, pas de cookie, configuration mini
 | D1 Time Travel | Restauration à la minute ; 30 jours selon la doc générale de D1, durée exacte pour l'offre gratuite à confirmer dans le tableau de bord avant E7. | |
 | Rate Limiting binding | Fenêtre de **10 s ou 60 s uniquement**, compteur **par point de présence** Cloudflare (pas global). | Les limites se calculent à la minute (§8). |
 
-Base D1 de production : `express-tournament-db`, région WEUR, binding `DB`.
+Bases D1 (région WEUR, binding `DB`) : `express-tournament-db` (production), `express-tournament-db-preview` (prévisualisations de branche).
 
 ## 4. Structure du dépôt
 
@@ -277,14 +277,14 @@ Uniquement noms de tournoi, lieu et équipes. Pas de compte, pas de cookie, pas 
 | Environnement | Cible | Base |
 |---|---|---|
 | Local | `vite dev` avec `@cloudflare/vite-plugin` (Worker + D1 locale Miniflare) | D1 locale |
-| Prévisualisation | Version de prévisualisation du Worker construite par Workers Builds pour chaque branche ≠ `main` | **même D1 que la production** |
+| Prévisualisation | Worker Preview construite par Workers Builds pour chaque branche ≠ `main` (`https://<branche>-express-tournament.fredconv.workers.dev`) | D1 `express-tournament-db-preview` (bloc `previews` de `wrangler.jsonc`) |
 | Production | Worker `express-tournament`, construit et déployé par Workers Builds à chaque push sur `main` | D1 de production |
 
 Réglages Workers Builds : build command `npm run build`, deploy command `npx wrangler deploy`, racine `/`.
 
 CI GitHub Actions (vérification seulement) : `npm ci` → `wrangler types --check` → `typecheck` → `lint` → `test` → `build`.
 
-Les prévisualisations partageant la base de production, **toute migration D1 doit être rétrocompatible** (ajouts uniquement) et appliquée manuellement (`wrangler d1 migrations apply --remote`) avant de fusionner le code qui l'utilise. Une base de préproduction séparée est au backlog, à ajouter si le trafic réel le justifie.
+Les prévisualisations ont leur **propre base D1** : aucune branche ne touche les données de production. Une migration est appliquée d'abord à la base de prévisualisation (`npm run db:migrate:preview`), puis à la production (`npm run db:migrate:remote`) **avant** la fusion du code qui l'utilise ; elle doit rester rétrocompatible (le code en production tourne encore pendant quelques secondes sur l'ancien schéma).
 
 Coût prévu : **0 €** (offres gratuites Workers + D1, sous-domaine `workers.dev`) ; ~10–15 €/an si nom de domaine.
 
@@ -308,7 +308,7 @@ Coût prévu : **0 €** (offres gratuites Workers + D1, sous-domaine `workers.d
 | ADR-3 | 2026-11-12 | Tournoi stocké comme document JSON versionné, planning figé à la publication. | Acceptée |
 | ADR-4 | 2026-11-12 | Propriété par code de gestion haché, transmis en en-tête, jamais en URL. | Acceptée |
 | ADR-5 | 2026-11-12 | PDF par impression navigateur, sans bibliothèque. | Acceptée |
-| ADR-6 | 2026-11-12 | Déploiement par Cloudflare Workers Builds ; GitHub Actions limité aux vérifications ; pas de base de préproduction séparée en V1. | Acceptée |
+| ADR-6 | 2026-11-12 | Déploiement par Cloudflare Workers Builds ; GitHub Actions limité aux vérifications ; prévisualisations de branche sur une base D1 dédiée (exigé par Worker Previews). | Acceptée |
 | ADR-7 | 2026-11-12 | En-têtes de sécurité : `public/_headers` pour les fichiers statiques, middleware Hono pour `/api`. | Acceptée |
 
 Toute nouvelle dépendance ou changement d'architecture ajoute une ligne ici.

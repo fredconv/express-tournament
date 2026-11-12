@@ -17,6 +17,17 @@
       "migrations_dir": "migrations"
     }
   ],
+  // Branch previews (Workers Builds) must never touch production data.
+  "previews": {
+    "d1_databases": [
+      {
+        "binding": "DB",
+        "database_name": "express-tournament-db-preview",
+        "database_id": "f976a9e4-5047-4d23-8524-0b777f6eb03f",
+        "migrations_dir": "migrations"
+      }
+    ]
+  },
   "observability": {
     "enabled": true
   }

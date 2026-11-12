@@ -38,11 +38,17 @@ Après une modification de `wrangler.jsonc`, régénérer les types : `npm run c
 
 ## Base de données (D1)
 
-Base de production : `express-tournament-db` (binding `DB`). Les migrations SQL sont dans `migrations/`.
+| Base | Usage |
+|---|---|
+| `express-tournament-db` | production (`main`) |
+| `express-tournament-db-preview` | prévisualisations de branche (`https://<branche>-express-tournament.fredconv.workers.dev`) |
+
+Les migrations SQL sont dans `migrations/` (binding `DB`). Nécessite `npx wrangler login` pour les bases distantes.
 
 ```bash
-npm run db:migrate:local    # applique les migrations à la base locale
-npm run db:migrate:remote   # applique les migrations à la base de production (nécessite `npx wrangler login`)
+npm run db:migrate:local     # base locale
+npm run db:migrate:preview   # base de prévisualisation
+npm run db:migrate:remote    # base de production
 ```
 
-Les prévisualisations de branche utilisent la base de production : une migration doit être **rétrocompatible** (ajouts uniquement) et appliquée avec `db:migrate:remote` **avant** de fusionner le code qui en dépend.
+Une migration doit être **rétrocompatible** (ajouts uniquement) et appliquée à la prévisualisation puis à la production **avant** de fusionner le code qui en dépend. `wrangler.preview-db.jsonc` ne sert qu'à migrer la base de prévisualisation ; garder son `database_id` synchronisé avec le bloc `previews` de `wrangler.jsonc`.
