@@ -25,7 +25,7 @@ Bloqué par : D5 (compte Cloudflare + dépôt GitHub).
 - Worker Hono minimal servant la SPA + `GET /api/health`.
 - `wrangler.jsonc`, base D1 créée, migration `0001_init.sql`.
 - Cloudflare Workers Builds relié au dépôt (déploiement sur `main`) ; GitHub Actions pour les vérifications.
-- Vérifier les quotas gratuits réels (Workers, D1, rate limiting, Time Travel) et corriger ARCHITECTURE.md si besoin.
+- Vérifier les quotas gratuits réels (Workers, D1, rate limiting, Time Travel) et corriger ARCHITECTURE.md si besoin. _(fait le 2026-11-12, ARCHITECTURE.md §3)_
 
 **DoD**
 - [ ] `https://…workers.dev/` affiche la page d'accueil sur un smartphone Android.

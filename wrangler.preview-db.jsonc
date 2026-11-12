@@ -1,0 +1,15 @@
+{
+  // Only used to apply D1 migrations to the branch-preview database:
+  // `wrangler d1 migrations apply` does not read the `previews` block of wrangler.jsonc.
+  // Keep database_id in sync with wrangler.jsonc > previews.d1_databases.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "express-tournament-preview-migrations",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "express-tournament-db-preview",
+      "database_id": "f976a9e4-5047-4d23-8524-0b777f6eb03f",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

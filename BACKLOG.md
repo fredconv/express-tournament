@@ -38,7 +38,6 @@ Priorité indicative : **P1** = première itération après V1, **P2** = ensuite
 | A15 | Durées de créneau différentes selon les matchs | P3 | Décision D1. |
 | A16 | Signalement de contenu abusif sur une page publique | P3 | Si abus constatés. |
 | A17 | Nom de domaine dédié | P2 | Décision D5. |
-| A18 | Base D1 de préproduction séparée (les prévisualisations de branche utilisent la base de production) | P2 | ADR-6. |
 
 ## Dette technique / qualité
 

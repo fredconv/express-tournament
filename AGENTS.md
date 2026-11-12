@@ -70,8 +70,11 @@ npm test               # vitest
 npm run build          # vite build (client + worker)
 npm run check          # typecheck + lint + test + build
 npm run cf-typegen     # régénère worker-configuration.d.ts après une modif de wrangler.jsonc
+npm run db:migrate:local   # migrations D1 en local
+npm run db:migrate:preview # migrations D1 sur la base des prévisualisations de branche
+npm run db:migrate:remote  # migrations D1 en production (rétrocompatibles uniquement, voir README)
 ```
-_(À ajouter quand l'étape les crée : `test:e2e` (E6), `db:migrate:local` (E0/E3). Mettre à jour cette liste si un script change.)_
+_(À ajouter quand l'étape le crée : `test:e2e` (E6). Mettre à jour cette liste si un script change.)_
 
 ## 9. Git
 

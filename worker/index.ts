@@ -5,7 +5,12 @@ export const app = new Hono<{ Bindings: Env }>().basePath('/api');
 
 app.use('*', securityHeaders);
 
-app.get('/health', (c) => c.json({ status: 'ok' }));
+app.get('/health', async (c) => {
+  const row = await c.env.DB.prepare('SELECT 1 AS ok').first<{ ok: number }>();
+  return row?.ok === 1
+    ? c.json({ status: 'ok', db: 'ok' })
+    : c.json({ status: 'degraded', db: 'unavailable' }, 503);
+});
 
 app.notFound((c) => c.json({ error: 'not_found' }, 404));
 
