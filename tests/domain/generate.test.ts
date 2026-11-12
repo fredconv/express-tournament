@@ -128,7 +128,6 @@ describe('generateSchedule — determinism', () => {
       expect(schedule(teams, courts)).toEqual(schedule(teams, courts));
     }
   });
-
 });
 
 describe.skipIf(import.meta.env.PERF_TESTS === 'off')('generateSchedule — performance', () => {
