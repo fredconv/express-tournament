@@ -1,19 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { generateSchedule } from '../../src/domain/schedule/generate';
+import { LIMITS } from '../../src/domain/limits';
+import { generateSchedule, schedulePools } from '../../src/domain/schedule/generate';
 import { validateSchedule } from '../../src/domain/schedule/validate';
 import type { ScheduleInput, ScheduleResult } from '../../src/domain/types';
-import { makeInput, schedule, slotsByTeam } from './helpers';
+import { makeInput, schedule, shapeOf, slotsByTeam } from './helpers';
 
 const TEAM_COUNTS = Array.from({ length: 31 }, (_, i) => i + 2);
-const COURT_COUNTS = Array.from({ length: 16 }, (_, i) => i + 1);
+const COURT_COUNTS = Array.from({ length: LIMITS.maxCourts }, (_, i) => i + 1);
 
 function invariantErrors(input: ScheduleInput, result: ScheduleResult) {
-  return validateSchedule({ ...input, matches: result.matches });
+  return validateSchedule({ ...shapeOf(input), matches: result.matches });
 }
 
 describe('generateSchedule — properties over every size (CA4.1, CA4.3, CA5.1)', () => {
   for (const avoidBackToBack of [false, true]) {
-    it(`2–32 teams × 1–16 courts, rest ${avoidBackToBack ? 'on' : 'off'}`, () => {
+    it(`2–32 teams × 1–6 courts, rest ${avoidBackToBack ? 'on' : 'off'}`, () => {
       for (const teams of TEAM_COUNTS) {
         for (const courts of COURT_COUNTS) {
           const input = makeInput(teams, courts, { avoidBackToBack });
@@ -37,7 +38,7 @@ describe('generateSchedule — slot count', () => {
   it('CA4.2: without rest and with enough courts, N−1 slots (even) or N (odd)', () => {
     for (const teams of TEAM_COUNTS) {
       const courts = Math.floor(teams / 2);
-      if (courts > 16) continue;
+      if (courts > LIMITS.maxCourts) continue;
       const result = schedule(teams, courts, { avoidBackToBack: false });
       expect(result.slotCount, `${teams} teams`).toBe(teams % 2 === 0 ? teams - 1 : teams);
     }
@@ -53,7 +54,7 @@ describe('generateSchedule — slot count', () => {
       [12, 4],
       [16, 4],
       [20, 4],
-      [32, 8],
+      [32, 6],
     ] as const;
     for (const [teams, courts] of sizes) {
       const usable = Math.min(courts, Math.floor(teams / 2));
@@ -122,7 +123,7 @@ describe('generateSchedule — determinism', () => {
       [5, 2],
       [8, 3],
       [16, 4],
-      [32, 8],
+      [32, 6],
     ] as const;
     for (const [teams, courts] of sizes) {
       expect(schedule(teams, courts)).toEqual(schedule(teams, courts));
@@ -131,9 +132,9 @@ describe('generateSchedule — determinism', () => {
 });
 
 describe.skipIf(import.meta.env.PERF_TESTS === 'off')('generateSchedule — performance', () => {
-  it('CA4.4: 32 teams / 16 courts in under 50 ms', () => {
+  it('CA4.4: 32 teams / 6 courts in under 50 ms', () => {
     const start = performance.now();
-    schedule(32, 16);
+    schedule(32, 6);
     expect(performance.now() - start).toBeLessThan(50);
   });
 
@@ -168,5 +169,30 @@ describe('generateSchedule — input validation', () => {
     ['fractional start', makeInput(4, 1, { startMinute: 540.5 })],
   ])('rejects %s', (_, input) => {
     expect(() => generateSchedule(input)).toThrow(RangeError);
+  });
+});
+
+describe('schedulePools — several pools on shared courts (CA4.6)', () => {
+  it('plays a round robin inside each pool, never across pools, without conflicts', () => {
+    const sizes = [4, 4, 4, 3];
+    let next = 0;
+    const pools = sizes.map((size, p) => ({
+      id: `p${p + 1}`,
+      teamIds: Array.from({ length: size }, () => `t${++next}`),
+    }));
+    for (const avoidBackToBack of [false, true]) {
+      const input = {
+        ...makeInput(2, 3, { avoidBackToBack }),
+        pools,
+        firstNumber: 23,
+        idPrefix: 'a',
+      };
+      const { teamIds: _unused, ...rest } = input;
+      const result = schedulePools(rest);
+      expect(result.matches).toHaveLength(6 + 6 + 6 + 3);
+      expect(result.matches[0]).toMatchObject({ id: 'a23', number: 23 });
+      expect(validateSchedule({ ...rest, matches: result.matches })).toEqual([]);
+      expect(result.slotCount).toBe(7);
+    }
   });
 });

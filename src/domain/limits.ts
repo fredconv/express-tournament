@@ -4,7 +4,7 @@ export const LIMITS = {
   minTeams: 2,
   maxTeams: 32,
   minCourts: 1,
-  maxCourts: 16,
+  maxCourts: 6,
   teamNameMax: 40,
   courtNameMax: 30,
   tournamentNameMax: 80,

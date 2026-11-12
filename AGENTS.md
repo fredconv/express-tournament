@@ -55,7 +55,7 @@ Un agent qui découvre une question produit **s'arrête et la pose** à l'utilis
 - Toute logique de `domain/` a des tests unitaires ; le moteur a des tests de propriétés (voir SPEC F4/F5).
 - Toute route API a des tests (succès, 401, 404, 409, 422 selon le cas) contre D1 locale.
 - Un bug corrigé = un test qui le reproduit d'abord.
-- Les parcours P1 → P2 → P3 sont couverts par Playwright en viewport mobile (à partir de E6).
+- Les parcours P1 → P2 → P3 sont couverts par Playwright en viewport mobile (à partir de E8).
 - Interdits dans `main` : `.only`, `.skip`, tests désactivés pour « faire passer » la CI.
 
 ## 8. Commandes
@@ -76,7 +76,7 @@ npm run db:migrate:local   # migrations D1 en local
 npm run db:migrate:preview # migrations D1 sur la base des prévisualisations de branche
 npm run db:migrate:remote  # migrations D1 en production (rétrocompatibles uniquement, voir README)
 ```
-_(À ajouter quand l'étape le crée : `test:e2e` (E6). Mettre à jour cette liste si un script change.)_
+_(À ajouter quand l'étape le crée : `test:e2e` (E8). Mettre à jour cette liste si un script change.)_
 
 ## 9. Git
 

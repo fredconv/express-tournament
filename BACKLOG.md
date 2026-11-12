@@ -8,11 +8,11 @@ Priorité indicative : **P1** = première itération après V1, **P2** = ensuite
 
 | # | Élément | Prio | Notes d'architecture (ARCHITECTURE.md §13) |
 |---|---|---|---|
-| B1 | Saisie des scores par match depuis un smartphone (participants) | P1 | Table `match_results` séparée du document ; clé = `match.id`. |
-| B2 | Validation des scores par un responsable | P1 | Basée sur le code de gestion ou un code « table de marque ». |
-| B3 | Classements automatiques (points, sets, ratio de points) | P1 | Fonction pure `computeStandings` dans `domain/`. Règles de départage à spécifier. |
-| B4 | Plusieurs poules | P2 | `schemaVersion: 2` avec `phases[]`, migration v1 → v2. |
-| B5 | Tournois éliminatoires (phases finales, consolante) | P2 | Nouveau type de phase ; qualifiés issus des classements. |
+| B1 | Saisie des scores par les équipes (participants) | P1 | En V1 seul l'organisateur saisit (D14). |
+| B2 | Validation des scores par un responsable | P2 | Code « table de marque ». |
+| B3 | Confrontation directe et autres règles de départage | P2 | V1 : D11. |
+| B4 | Demi-finales, petite finale, tableau éliminatoire | P2 | Une manche = des poules de deux équipes (`schedulePools`). |
+| B5 | Autres formats de tournoi (consolante, système suisse…) | P3 | Hors MVP (recentrage du 2026-11-12). |
 | B6 | Inscriptions des équipes en ligne | P3 | Nécessite modération et anti-spam. |
 | B7 | Statistiques | P3 | — |
 | B8 | Autres sports et formats (beach, badminton, foot…) | P3 | `sport` est déjà un champ du document. |
@@ -38,6 +38,12 @@ Priorité indicative : **P1** = première itération après V1, **P2** = ensuite
 | A15 | Durées de créneau différentes selon les matchs | P3 | Décision D1. |
 | A16 | Signalement de contenu abusif sur une page publique | P3 | Si abus constatés. |
 | A17 | Nom de domaine dédié | P2 | Décision D5. |
+| A20 | Éviter les revanches matin / après-midi | P2 | V1 : blocs consécutifs (D12). |
+| A21 | Têtes de série, déplacement manuel d'une équipe entre poules | P2 | V1 : tirage au sort. |
+| A22 | Mode hors ligne (PWA installable) | P1 | Reporté du MVP. |
+| A23 | Gérer depuis un autre appareil, suppression, purge automatique à 90 jours | P1 | Reporté du MVP (D4, D6). |
+| A24 | Tests E2E Playwright et audit Lighthouse | P2 | Reporté du MVP. |
+| A25 | Estimation de l'heure de fin de journée dès la configuration | P2 | |
 | A19 | Optimiseur de repos plus fort (recherche locale / échanges de matchs) : 8 équipes / 3 terrains garde une série de 4 matchs pour une équipe | P2 | ADR-8, cas de référence. |
 
 ## Dette technique / qualité

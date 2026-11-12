@@ -43,6 +43,7 @@ export const scheduledMatchSchema = z.object({
   number: int(1, MAX_MATCHES),
   slot: int(0, MAX_MATCHES),
   courtId: idSchema,
+  poolId: idSchema,
   teamAId: idSchema,
   teamBId: idSchema,
   startMinute: z.number().int().min(0),
@@ -89,7 +90,7 @@ export const tournamentDocSchema = z
     }
 
     const errors = validateSchedule({
-      teamIds: doc.teams.map((t) => t.id),
+      pools: [{ id: 'p1', teamIds: doc.teams.map((t) => t.id) }],
       courtIds: doc.courts.map((c) => c.id),
       startMinute: doc.schedule.startMinute,
       slotMinutes: doc.schedule.slotMinutes,

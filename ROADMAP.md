@@ -1,6 +1,8 @@
 # ROADMAP — Tournoi Express V1
 
-Version 0.1 — 2026-11-12
+Version 0.3 — 2026-11-12 — **recentrée sur le MVP** (demande utilisateur du 2026-11-12) : poules, scores, après-midi, finale simple, publication. Chemin le plus court vers une V1 déployable ; tout le reste est au BACKLOG.
+
+Règle : avant d'ajouter quoi que ce soit, se demander si c'est indispensable pour mener un vrai tournoi avec la V1. Sinon → BACKLOG.md.
 
 Étapes courtes, ordonnées, chacune livrable et déployée. On **déploie dès E0** pour éliminer le risque d'hébergement en premier. Une étape n'est terminée que lorsque sa Definition of Done (DoD) est entièrement cochée.
 
@@ -55,81 +57,54 @@ Bloqué par : D3.
 
 **DoD**
 - [x] CA1.2, CA1.3, CA2.1 à CA2.3, CA3.3 (partie client) verts. _(tests/domain/draft.test.ts)_
-- [ ] Parcours P1 jusqu'à l'aperçu réalisable en mode avion. _(aucun appel réseau dans l'éditeur ; à confirmer sur téléphone — le cache hors ligne de l'app arrive en E5)_
+- [ ] Parcours P1 jusqu'à l'aperçu réalisable en mode avion. _(aucun appel réseau dans l'éditeur ; à confirmer sur téléphone — mode hors ligne reporté au BACKLOG)_
 - [ ] RM : 8 équipes / 2 terrains configurés en < 4 min sur Android par une personne qui découvre l'app.
 
-## E3 — API, persistance et gestion propriétaire (M)
-Bloqué par : D4, D6.
+## E3 — Poules, scores, après-midi et finale (M)
 
-- Routes §7, `auth.ts` (génération, hachage, comparaison à temps constant), `repository.ts`.
-- Validation Zod + `validateSchedule()` côté serveur, limites de taille et de débit, verrou optimiste.
-- En-têtes de sécurité, CSP, `robots.txt`, `noindex`.
-- Cron de purge des tournois expirés.
+Dans l'éditeur local existant, sans nouvelle couche d'architecture : quelques fonctions pures dans `src/domain/` (répartition, classement, après-midi) et des écrans dans `src/app/`.
 
-**DoD**
-- [ ] CA3.3 (serveur), CA9.1 à CA9.4 automatisés contre D1 locale.
-- [ ] Test : le code de gestion n'apparaît dans aucune réponse publique ni aucun log.
-- [ ] Test : un document invalide (conflit forgé, équipe inconnue, 40 équipes) → 422.
-- [ ] En-têtes de sécurité vérifiés sur la préproduction (`curl -I`).
-
-## E4 — Publication, page publique et QR code (M)
-
-- Bouton Publier / Publier les modifications, gestion des 409.
-- Écran code de gestion (copier / partager / afficher) et « Mes tournois ».
-- « Gérer depuis un autre appareil » (lien + code → `owner-check`).
-- Page publique `/t/:id` : planning, filtre « Mon équipe », prochain match, actualisation, 404 propre.
-- Écran QR plein écran, copier / partager le lien.
+- Réglages : terrains 1–6 en boutons, « durée d'un match » (au lieu de « créneau »), rotation, pause de midi fixe.
+- Matin : tirage des poules (3–5 équipes), round-robin dans chaque poule, poules jouées en même temps sur les terrains partagés.
+- Saisie des scores (sets), classement de chaque poule.
+- Après-midi : poules de niveau construites depuis le classement du matin, planning après la pause de midi.
+- Finale simple : 1ᵉʳ contre 2ᵉ de la première poule de l'après-midi, à la suite.
+- Un seul planning chronologique de la journée (matin, pause, après-midi, finale).
 
 **DoD**
-- [ ] CA1.1, CA6.1, CA6.2, CA8.2, CA9.3 (UI), CA9.5 verts.
-- [ ] RM : QR scanné depuis un Android et un iPhone à 1 m (CA8.1).
-- [ ] RM : modification publiée visible par un participant après « Actualiser ».
+- [ ] CA3.4, CA4.6, CA10.1 à CA10.3, CA11.1, CA11.2, CA12.1 à CA12.3 automatisés et verts.
+- [ ] Parcours complet (création → tirage → scores → après-midi → finale) faisable en viewport 375 × 812.
 
-## E5 — Impression PDF et PWA hors ligne (S)
+## E4 — Publication, page publique, QR et impression (M)
 
-- `print.css`, bouton Imprimer / PDF sur vue complète et filtrée.
-- vite-plugin-pwa : manifest, icônes, precache, network-first sur la lecture publique, bandeau hors ligne, invite de mise à jour.
-
-**DoD**
-- [ ] CA6.4, CA7.1, CA7.2 vérifiés.
-- [ ] L'app s'installe sur Android (icône, nom, lancement plein écran).
-- [ ] Lighthouse mobile sur la page publique : Performance ≥ 90, Accessibilité ≥ 90, PWA installable.
-
-## E6 — Durcissement et bêta réelle (S + test terrain)
-
-- Gestion des erreurs réseau et messages clairs partout ; page Confidentialité ; page À propos.
-- Tests E2E Playwright du parcours P1 → P2 en viewport mobile.
-- Revue sécurité ciblée (Codex) + `/security-review`.
-- **Test terrain** : au moins un vrai tournoi (ou simulation avec ≥ 5 personnes et leurs téléphones).
+- API minimale : `POST /api/tournaments` (création, renvoie le code de gestion une seule fois), `GET /api/tournaments/:id`, `PUT /api/tournaments/:id` (code de gestion + version). Validation Zod côté serveur, hachage SHA-256 du code, limite de taille.
+- Bouton « Publier » / « Publier les mises à jour » (après chaque saisie de scores).
+- Page publique `/t/:id` : planning de la journée, scores, classements, filtre « Mon équipe », bouton « Actualiser ».
+- Écran QR plein écran + lien à copier ; feuille `print.css` pour imprimer / enregistrer en PDF.
 
 **DoD**
-- [ ] E2E P1 → P2 → P3 vert en CI.
-- [ ] Aucun constat de sécurité bloquant ouvert.
-- [ ] Retours du test terrain triés : bloquants corrigés, le reste dans BACKLOG.md.
-- [ ] CA6.3 mesuré sur un vrai Android en 4G.
+- [ ] CA6.1, CA6.2, CA8.2, CA9.1 à CA9.4 automatisés et verts.
+- [ ] En-têtes de sécurité vérifiés sur la prévisualisation (`curl -I`).
+- [ ] RM : QR scanné depuis un autre téléphone ; PDF lisible depuis Chrome Android (CA7.1, CA8.1).
 
-## E7 — Mise en production (S)
+## E5 — Mise en production et tournoi réel (S)
 
-- Base D1 de production, migration appliquée, déploiement sur tag `v1.0.0`.
-- Nom de domaine (si décidé), sinon URL `workers.dev` de production.
-- Procédure de restauration D1 testée une fois.
+- Fusion sur `main`, migration D1 appliquée, production vérifiée.
+- Test terrain : un vrai tournoi (ou simulation à plusieurs téléphones) ; anomalies bloquantes corrigées, le reste au BACKLOG.
 
 **DoD de publication finale (V1)**
-- [ ] Toutes les DoD E0 à E6 cochées.
-- [ ] Tous les critères d'acceptation F1 à F9 de SPEC.md cochés.
-- [ ] Production accessible publiquement en HTTPS ; un tournoi créé en production est consultable via QR depuis un Android **qui n'a jamais ouvert l'app**.
-- [ ] Migrations D1 rétrocompatibles et appliquées ; procédure documentée dans le README.
-- [ ] Aucune anomalie bloquante ouverte (les non bloquantes sont au backlog et ne retardent pas la sortie).
-- [ ] README : démarrage local, déploiement, restauration, limites connues.
-- [ ] Tag Git `v1.0.0` et note de version.
-- [ ] Coût mensuel constaté = 0 € (hors domaine).
+- [ ] DoD E0 à E4 cochées (sauf RM explicitement reportées et notées dans `HANDOFF.md`).
+- [ ] Un tournoi créé en production est consultable via QR depuis un téléphone qui n'a jamais ouvert l'app.
+- [ ] README : démarrage local, déploiement, limites connues.
+- [ ] Tag Git `v1.0.0`.
+- [ ] Coût mensuel constaté = 0 €.
 
 ---
 
-## Ordre et dépendances
+## Ordre
 
 ```
-E0 ──► E1 ──► E2 ──► E4 ──► E5 ──► E6 ──► E7
-          └─────► E3 ──┘
+E0 ──► E1 ──► E2 ──► E3 ──► E4 ──► E5
 ```
-E3 peut avancer en parallèle de E2 (fichiers disjoints : `worker/` vs `src/app/`), les deux s'appuyant sur `domain/`.
+
+Reportés au BACKLOG (non indispensables pour mener un tournoi) : PWA hors ligne, gestion depuis un autre appareil, suppression et purge automatique, tests E2E Playwright, Lighthouse, demi-finales, anti-revanches.

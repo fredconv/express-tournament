@@ -64,12 +64,12 @@ Une seule origine (SPA + API) ⇒ pas de CORS, pas de cookie, configuration mini
 |---|---|---|
 | Requêtes Worker | 100 000 / jour | Seuls les appels `/api` comptent. |
 | Fichiers statiques | Gratuits et illimités | L'app (HTML/JS/CSS) ne consomme pas le quota. |
-| CPU | **10 ms par requête** | Validation serveur (Zod + `validateSchedule`) à mesurer sur un tournoi de 32 équipes en E3 ; rester sous ~5 ms. |
+| CPU | **10 ms par requête** | Validation serveur (Zod + `validateSchedule`) à mesurer sur un tournoi de 32 équipes en E5 ; rester sous ~5 ms. |
 | Cron Triggers | 5 par compte | 1 utilisé (purge quotidienne). |
 | D1 lectures | 5 M lignes / jour | ~1 ligne par consultation de page publique. |
 | D1 écritures | 100 000 lignes / jour | Écritures rares (publication). |
 | D1 stockage | 5 Go | Tournoi < 50 Ko → > 100 000 tournois. |
-| D1 Time Travel | Restauration à la minute ; 30 jours selon la doc générale de D1, durée exacte pour l'offre gratuite à confirmer dans le tableau de bord avant E7. | |
+| D1 Time Travel | Restauration à la minute ; 30 jours selon la doc générale de D1, durée exacte pour l'offre gratuite à confirmer dans le tableau de bord avant E9. | |
 | Rate Limiting binding | Fenêtre de **10 s ou 60 s uniquement**, compteur **par point de présence** Cloudflare (pas global). | Les limites se calculent à la minute (§8). |
 
 Bases D1 (région WEUR, binding `DB`) : `express-tournament-db` (production), `express-tournament-db-preview` (prévisualisations de branche).
@@ -157,6 +157,10 @@ function generateSchedule(input: ScheduleInput): {
   warnings: ScheduleWarning[];
 };
 ```
+
+### Plusieurs poules (MVP, 2026-11-12)
+
+`schedulePools({ pools, courtIds, … })` planifie un round-robin dans chaque poule, toutes les poules partageant les terrains : les rencontres de toutes les poules sont simplement concaténées (entrelacées par tour) et placées par le même glouton. `generateSchedule` (une poule) l'appelle. La finale est une poule de deux équipes. Chaque match porte son `poolId` ; la numérotation continue d'une phase à l'autre (`firstNumber`). Pas d'autre couche : répartition, classement et après-midi sont de petites fonctions pures dans `src/domain/`.
 
 ### Algorithme (simple, déterministe, O(M × C × S))
 
@@ -250,7 +254,7 @@ Sur POST/PUT le serveur : valide Zod → `validateSchedule()` → vérifie que l
 | Spam / abus de création | Limite de débit par IP via binding Rate Limiting Workers (fenêtre de 60 s, compteur par point de présence) : POST ≈ 3/min, PUT ≈ 30/min par tournoi ; taille de corps 100 Ko ; limites Zod (32 équipes, 16 terrains, longueurs). |
 | Données invalides rendant la page publique illisible | Validation serveur systématique (Zod + invariants du moteur). |
 | Écrasement concurrent | Verrou optimiste `version` / `If-Match` → 409. |
-| Perte de données | D1 Time Travel (restauration à la minute ; durée sur l'offre gratuite à confirmer avant E7) ; export JSON du tournoi par l'organisateur → backlog. |
+| Perte de données | D1 Time Travel (restauration à la minute ; durée sur l'offre gratuite à confirmer avant E9) ; export JSON du tournoi par l'organisateur → backlog. |
 | Secrets d'infrastructure | Aucun jeton Cloudflare dans GitHub (déploiement par Workers Builds, jeton géré par Cloudflare) ; aucun secret dans le bundle client ; `.dev.vars` ignoré par Git. |
 
 En-têtes appliqués par le Worker : `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Permissions-Policy` restrictive, `X-Frame-Options: DENY`, HSTS (via Cloudflare).

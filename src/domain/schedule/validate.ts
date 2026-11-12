@@ -1,17 +1,20 @@
-import type { ScheduledMatch } from '../types';
+import type { PoolInput, ScheduledMatch } from '../types';
 
 export interface ScheduleShape {
-  teamIds: readonly string[];
+  pools: readonly PoolInput[];
   courtIds: readonly string[];
   startMinute: number;
   slotMinutes: number;
   transitionMinutes: number;
+  /** Number of the first match of the phase; default 1. */
+  firstNumber?: number;
   matches: readonly ScheduledMatch[];
 }
 
 export type ScheduleError =
   | { code: 'unknown-team'; matchId: string }
   | { code: 'unknown-court'; matchId: string }
+  | { code: 'cross-pool'; matchId: string }
   | { code: 'self-match'; matchId: string }
   | { code: 'duplicate-pair'; matchId: string }
   | { code: 'missing-pairs'; count: number }
@@ -22,25 +25,32 @@ export type ScheduleError =
   | { code: 'duplicate-id'; matchId: string };
 
 /**
- * Checks the invariants of a published schedule (SPEC F4/F5). Used by the tests and
- * by the server before storing a tournament, so a forged schedule is rejected.
+ * Checks the invariants of a phase schedule (SPEC F4/F5): a full round robin inside
+ * each pool and no conflict. Used by the tests and by the server before storing a
+ * tournament, so a forged schedule is rejected.
  */
 export function validateSchedule(shape: ScheduleShape): ScheduleError[] {
   const errors: ScheduleError[] = [];
-  const teams = new Set(shape.teamIds);
+  const poolOfTeam = new Map<string, string>();
+  for (const pool of shape.pools) for (const t of pool.teamIds) poolOfTeam.set(t, pool.id);
   const courts = new Set(shape.courtIds);
   const pairs = new Set<string>();
   const ids = new Set<string>();
   const teamSlots = new Set<string>();
   const courtSlots = new Set<string>();
   const step = shape.slotMinutes + shape.transitionMinutes;
+  const firstNumber = shape.firstNumber ?? 1;
 
   shape.matches.forEach((m, index) => {
     if (ids.has(m.id)) errors.push({ code: 'duplicate-id', matchId: m.id });
     ids.add(m.id);
 
-    if (!teams.has(m.teamAId) || !teams.has(m.teamBId)) {
+    const poolA = poolOfTeam.get(m.teamAId);
+    const poolB = poolOfTeam.get(m.teamBId);
+    if (poolA === undefined || poolB === undefined) {
       errors.push({ code: 'unknown-team', matchId: m.id });
+    } else if (poolA !== poolB || poolA !== m.poolId) {
+      errors.push({ code: 'cross-pool', matchId: m.id });
     }
     if (!courts.has(m.courtId)) errors.push({ code: 'unknown-court', matchId: m.id });
     if (m.teamAId === m.teamBId) errors.push({ code: 'self-match', matchId: m.id });
@@ -71,13 +81,15 @@ export function validateSchedule(shape: ScheduleShape): ScheduleError[] {
     }
 
     const previous = shape.matches[index - 1];
-    if (m.number !== index + 1 || (previous !== undefined && previous.slot > m.slot)) {
+    if (m.number !== firstNumber + index || (previous !== undefined && previous.slot > m.slot)) {
       errors.push({ code: 'bad-numbering', matchId: m.id });
     }
   });
 
-  const n = shape.teamIds.length;
-  const expectedPairs = (n * (n - 1)) / 2;
+  const expectedPairs = shape.pools.reduce((sum, p) => {
+    const n = p.teamIds.length;
+    return sum + (n * (n - 1)) / 2;
+  }, 0);
   if (pairs.size < expectedPairs) {
     errors.push({ code: 'missing-pairs', count: expectedPairs - pairs.size });
   }

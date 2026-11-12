@@ -29,8 +29,23 @@ export interface ScheduleInput {
   targetEndMinute?: number;
 }
 
+export interface PoolInput {
+  id: string;
+  teamIds: readonly string[];
+}
+
+/** Several pools played at the same time on shared courts (SPEC F4). */
+export interface PoolScheduleInput extends Omit<ScheduleInput, 'teamIds'> {
+  pools: readonly PoolInput[];
+  /** Match ids are `${idPrefix}${number}`; default "m". */
+  idPrefix?: string;
+  /** Number of the first match, so numbering continues across phases; default 1. */
+  firstNumber?: number;
+}
+
 export interface ScheduledMatch {
   id: string;
+  poolId: string;
   /** 1-based number shown to players, chronological then by court. */
   number: number;
   /** 0-based time slot index. */

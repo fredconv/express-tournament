@@ -67,7 +67,7 @@ describe('draft teams (SPEC F2)', () => {
 });
 
 describe('draft settings (SPEC F3)', () => {
-  it('keeps court count within 1–16 and names new courts', () => {
+  it('keeps court count within 1–6 and names new courts', () => {
     const ids = counterIds();
     const draft = createDraft('2026-12-05', ids, 'now');
     expect(setCourtCount(draft, 4, ids).courts.map((c) => c.name)).toEqual([
@@ -77,7 +77,7 @@ describe('draft settings (SPEC F3)', () => {
       'Terrain 4',
     ]);
     expect(setCourtCount(draft, 0, ids).courts).toHaveLength(1);
-    expect(setCourtCount(draft, 40, ids).courts).toHaveLength(16);
+    expect(setCourtCount(draft, 40, ids).courts).toHaveLength(6);
   });
 
   it('follows the suggested slot length until the organizer overrides it', () => {
