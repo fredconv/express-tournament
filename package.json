@@ -19,13 +19,16 @@
     "check": "npm run typecheck && npm run lint && npm test && npm run build",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
-    "db:migrate:preview": "wrangler d1 migrations apply DB --remote -c wrangler.preview-db.jsonc"
+    "db:migrate:preview": "wrangler d1 migrations apply DB --remote -c wrangler.preview-db.jsonc",
+    "schedule:demo": "tsx scripts/schedule-demo.ts",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "hono": "^4.13.18",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-router": "^8.5.1"
+    "react-router": "^8.5.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.7",
@@ -34,6 +37,8 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
+    "@vitest/coverage-v8": "^5.1.0",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
     "vitest": "^5.1.0",
