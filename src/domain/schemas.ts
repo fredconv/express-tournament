@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { suggestSlotMinutes } from './format';
 import { LIMITS } from './limits';
+import { normalizeName } from './names';
 import { validateSchedule } from './schedule/validate';
 import { MAX_SET_POINTS, scoreIssue } from './scores';
 import { isValidTime, MINUTES_PER_DAY, parseTime } from './time';
@@ -171,7 +172,4 @@ function endOf(matches: readonly ScheduledMatch[]): number {
   return matches.reduce((end, m) => Math.max(end, m.endMinute), 0);
 }
 
-/** Team names are unique ignoring case and surrounding/multiple spaces (SPEC F2). */
-export function normalizeName(name: string): string {
-  return name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('fr');
-}
+export { normalizeName };
