@@ -1,9 +1,24 @@
 import { suggestSlotMinutes } from '../../domain/format';
 import { LIMITS } from '../../domain/limits';
-import { generateSchedule } from '../../domain/schedule/generate';
+import { drawPools } from '../../domain/pools';
+import { schedulePools } from '../../domain/schedule/generate';
 import { normalizeName } from '../../domain/schemas';
+import { type SetScore, scoreIssue } from '../../domain/scores';
+import {
+  isPoolComplete,
+  levelPools,
+  overallRanking,
+  poolStandings,
+  type Results,
+} from '../../domain/standings';
 import { isValidTime, parseTime } from '../../domain/time';
-import type { MatchFormat, ScheduleInput, ScheduleResult } from '../../domain/types';
+import type {
+  MatchFormat,
+  PoolInput,
+  PoolScheduleInput,
+  ScheduledMatch,
+  ScheduleResult,
+} from '../../domain/types';
 
 // Local, unpublished tournament being edited on this device (SPEC F1, decision D3).
 // Pure functions only: React components call these, tests exercise them directly.
@@ -29,17 +44,37 @@ export interface Draft {
   avoidBackToBack: boolean;
   /** HH:mm or '' when not set. */
   targetEndTime: string;
+  /** Fixed break between the end of the morning and the afternoon. */
+  lunchMinutes: number;
   courts: NamedItem[];
   teams: NamedItem[];
+  /** Seed of the morning pool draw. */
+  drawSeed: number | null;
+  /** Morning pools, in draw order. */
+  pools: PoolInput[];
+  /** Morning schedule. */
   schedule: ScheduleResult | null;
-  /** Inputs the schedule was generated from; differs from the current inputs when stale. */
+  /** Inputs the morning was generated from; differs from the current inputs when stale. */
   scheduleKey: string | null;
+  afternoon: Phase | null;
+  final: Phase | null;
+  /** Scores by match id, all phases. */
+  results: Record<string, SetScore[]>;
   updatedAt: string;
+}
+
+/** A generated afternoon or final, with the inputs it was built from. */
+export interface Phase {
+  pools: PoolInput[];
+  schedule: ScheduleResult;
+  key: string;
 }
 
 export type IdFactory = (prefix: string) => string;
 
 export const DEFAULT_FORMAT: MatchFormat = { kind: 'time', setCount: 2, minutesPerSet: 10 };
+export const DEFAULT_LUNCH_MINUTES = 60;
+export const MAX_LUNCH_MINUTES = 180;
 
 export function createDraft(today: string, newId: IdFactory, now: string): Draft {
   return {
@@ -54,13 +89,19 @@ export function createDraft(today: string, newId: IdFactory, now: string): Draft
     transitionMinutes: 5,
     avoidBackToBack: true,
     targetEndTime: '',
+    lunchMinutes: DEFAULT_LUNCH_MINUTES,
     courts: [
       { id: newId('c'), name: 'Terrain 1' },
       { id: newId('c'), name: 'Terrain 2' },
     ],
     teams: [],
+    drawSeed: null,
+    pools: [],
     schedule: null,
     scheduleKey: null,
+    afternoon: null,
+    final: null,
+    results: {},
     updatedAt: now,
   };
 }
@@ -162,6 +203,7 @@ export type DraftIssue =
   | 'invalid-target-end'
   | 'invalid-slot-minutes'
   | 'invalid-transition'
+  | 'invalid-lunch'
   | 'court-name-missing';
 
 /** Issues that block schedule generation, in display order. */
@@ -180,45 +222,195 @@ export function draftIssues(draft: Draft): DraftIssue[] {
   if (!isIntIn(draft.transitionMinutes, 0, LIMITS.maxTransitionMinutes)) {
     issues.push('invalid-transition');
   }
+  if (!isIntIn(draft.lunchMinutes, 0, MAX_LUNCH_MINUTES)) issues.push('invalid-lunch');
   if (draft.courts.some((c) => c.name.trim() === '')) issues.push('court-name-missing');
   return issues;
 }
 
-/** Engine input for the current draft; only valid when `draftIssues` is empty. */
-export function scheduleInputOf(draft: Draft): ScheduleInput {
-  const input: ScheduleInput = {
-    teamIds: draft.teams.map((t) => t.id),
+/** Issues that block generation (name and date only block publishing). */
+export function blockingIssues(draft: Draft): DraftIssue[] {
+  return draftIssues(draft).filter((i) => i !== 'name-missing' && i !== 'date-missing');
+}
+
+type Timing = Omit<PoolScheduleInput, 'pools' | 'startMinute' | 'idPrefix' | 'firstNumber'>;
+
+/** Courts and durations shared by every phase; only valid when `blockingIssues` is empty. */
+export function timingOf(draft: Draft): Timing {
+  const timing: Timing = {
     courtIds: draft.courts.map((c) => c.id),
-    startMinute: parseTime(draft.startTime),
     slotMinutes: draft.slotMinutes,
     transitionMinutes: draft.transitionMinutes,
     avoidBackToBack: draft.avoidBackToBack,
   };
   return draft.targetEndTime === ''
-    ? input
-    : { ...input, targetEndMinute: parseTime(draft.targetEndTime) };
+    ? timing
+    : { ...timing, targetEndMinute: parseTime(draft.targetEndTime) };
 }
 
 function scheduleKeyOf(draft: Draft): string {
-  return JSON.stringify(scheduleInputOf(draft));
+  return JSON.stringify({
+    teams: draft.teams.map((t) => t.id),
+    start: draft.startTime,
+    lunch: draft.lunchMinutes,
+    seed: draft.drawSeed,
+    ...timingOf(draft),
+  });
 }
 
-export function generate(draft: Draft): Draft {
-  if (draftIssues(draft).some((i) => i !== 'name-missing' && i !== 'date-missing')) {
-    throw new Error('Draft is not ready for generation');
-  }
-  return {
-    ...draft,
-    schedule: generateSchedule(scheduleInputOf(draft)),
-    scheduleKey: scheduleKeyOf(draft),
-  };
+/**
+ * Draws the morning pools with `seed` and plans them (SPEC F10). Clears every score
+ * and later phase: the caller confirms first when scores exist.
+ */
+export function generate(draft: Draft, seed: number): Draft {
+  if (blockingIssues(draft).length > 0) throw new Error('Draft is not ready for generation');
+  const pools = drawPools(
+    draft.teams.map((t) => t.id),
+    seed,
+  );
+  const schedule = schedulePools({
+    ...timingOf(draft),
+    pools,
+    startMinute: parseTime(draft.startTime),
+  });
+  const next = { ...draft, drawSeed: seed, pools, schedule, afternoon: null, final: null };
+  return { ...next, results: {}, scheduleKey: scheduleKeyOf(next) };
 }
 
 /** CA2.3: any change to teams or settings after generation marks the schedule stale. */
 export function isScheduleStale(draft: Draft): boolean {
   if (draft.schedule === null) return false;
-  const blocking = draftIssues(draft).filter((i) => i !== 'name-missing' && i !== 'date-missing');
-  return blocking.length > 0 || draft.scheduleKey !== scheduleKeyOf(draft);
+  return blockingIssues(draft).length > 0 || draft.scheduleKey !== scheduleKeyOf(draft);
+}
+
+export function hasResults(draft: Draft): boolean {
+  return Object.keys(draft.results).length > 0;
+}
+
+// ---------- Scores (SPEC F11) ----------
+
+export function isFinalMatch(draft: Draft, matchId: string): boolean {
+  return draft.final?.schedule.matches.some((m) => m.id === matchId) ?? false;
+}
+
+/** Stores a valid score, or clears it with `null`. Invalid scores are ignored. */
+export function setResult(draft: Draft, matchId: string, sets: SetScore[] | null): Draft {
+  const results = { ...draft.results };
+  if (sets === null) {
+    delete results[matchId];
+  } else {
+    if (scoreIssue(sets, draft.matchFormat, isFinalMatch(draft, matchId)) !== null) return draft;
+    results[matchId] = sets;
+  }
+  return { ...draft, results };
+}
+
+function scoresOf(matches: readonly ScheduledMatch[], results: Results) {
+  return matches.map((m) => [m.id, results[m.id] ?? null]);
+}
+
+export function missingScores(matches: readonly ScheduledMatch[], results: Results): number {
+  return matches.filter((m) => results[m.id] === undefined).length;
+}
+
+// ---------- Afternoon and final (SPEC F12) ----------
+
+function afternoonKeyOf(draft: Draft): string {
+  return JSON.stringify([
+    draft.scheduleKey,
+    scoresOf(draft.schedule?.matches ?? [], draft.results),
+  ]);
+}
+
+export function canGenerateAfternoon(draft: Draft): boolean {
+  return (
+    draft.schedule !== null &&
+    !isScheduleStale(draft) &&
+    missingScores(draft.schedule.matches, draft.results) === 0
+  );
+}
+
+/** Level pools from the morning ranking, after the lunch break. Clears afternoon scores. */
+export function generateAfternoon(draft: Draft): Draft {
+  if (!canGenerateAfternoon(draft) || draft.schedule === null) {
+    throw new Error('Morning is not complete');
+  }
+  const morning = draft.schedule;
+  const pools = levelPools(overallRanking(draft.pools, morning.matches, draft.results));
+  const schedule = schedulePools({
+    ...timingOf(draft),
+    pools,
+    startMinute: morning.endMinute + draft.lunchMinutes,
+    idPrefix: 'a',
+    firstNumber: morning.matches.length + 1,
+  });
+  return {
+    ...draft,
+    afternoon: { pools, schedule, key: afternoonKeyOf(draft) },
+    final: null,
+    results: withoutPhases(draft.results, ['a', 'f']),
+  };
+}
+
+export function isAfternoonStale(draft: Draft): boolean {
+  return draft.afternoon !== null && draft.afternoon.key !== afternoonKeyOf(draft);
+}
+
+function topPool(draft: Draft): PoolInput | undefined {
+  return draft.afternoon?.pools[0];
+}
+
+function finalKeyOf(draft: Draft): string {
+  const afternoon = draft.afternoon;
+  const pool = topPool(draft);
+  if (!afternoon || !pool) return '';
+  const matches = afternoon.schedule.matches.filter((m) => m.poolId === pool.id);
+  return JSON.stringify([afternoon.key, scoresOf(matches, draft.results)]);
+}
+
+export function canGenerateFinal(draft: Draft): boolean {
+  const pool = topPool(draft);
+  return (
+    draft.afternoon !== null &&
+    pool !== undefined &&
+    !isAfternoonStale(draft) &&
+    isPoolComplete(pool.id, draft.afternoon.schedule.matches, draft.results)
+  );
+}
+
+/** D13: first against second of the top afternoon pool, on the first court, after the afternoon. */
+export function generateFinal(draft: Draft): Draft {
+  const afternoon = draft.afternoon;
+  const pool = topPool(draft);
+  if (!canGenerateFinal(draft) || !afternoon || !pool) throw new Error('Top pool not complete');
+  const [first, second] = poolStandings(pool, afternoon.schedule.matches, draft.results);
+  if (!first || !second) throw new Error('Top pool needs two teams');
+  const pools = [{ id: 'F', teamIds: [first.teamId, second.teamId] }];
+  const { courtIds, ...timing } = timingOf(draft);
+  const schedule = schedulePools({
+    ...timing,
+    courtIds: courtIds.slice(0, 1),
+    pools,
+    startMinute: afternoon.schedule.endMinute + draft.transitionMinutes,
+    idPrefix: 'f',
+    firstNumber: (draft.schedule?.matches.length ?? 0) + afternoon.schedule.matches.length + 1,
+  });
+  return {
+    ...draft,
+    final: { pools, schedule, key: finalKeyOf(draft) },
+    results: withoutPhases(draft.results, ['f']),
+  };
+}
+
+export function isFinalStale(draft: Draft): boolean {
+  return draft.final !== null && (isAfternoonStale(draft) || draft.final.key !== finalKeyOf(draft));
+}
+
+function withoutPhases(results: Results, prefixes: readonly string[]): Record<string, SetScore[]> {
+  return Object.fromEntries(
+    Object.entries(results)
+      .filter(([id]) => !prefixes.some((p) => id.startsWith(p)))
+      .map(([id, sets]) => [id, [...sets]]),
+  );
 }
 
 function isIntIn(value: number, min: number, max: number): boolean {

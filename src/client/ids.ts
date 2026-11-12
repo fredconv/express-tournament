@@ -13,3 +13,8 @@ export function todayIso(date = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
+
+/** Random 32-bit seed for the pool draw. */
+export function newSeed(): number {
+  return crypto.getRandomValues(new Uint32Array(1))[0] as number;
+}

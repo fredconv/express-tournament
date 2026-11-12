@@ -10,10 +10,10 @@ import {
   removeTeam,
   renameTeam,
   resetSlotMinutes,
-  scheduleInputOf,
   setCourtCount,
   setMatchFormat,
   setSlotMinutes,
+  timingOf,
 } from '../../src/app/draft/model';
 import { createDraftStore, type KeyValueStore } from '../../src/client/storage';
 
@@ -127,16 +127,16 @@ describe('draft generation (SPEC F4, CA2.3)', () => {
     );
   });
 
-  it('builds the engine input from the draft', () => {
-    const input = scheduleInputOf({ ...draftWithTeams(4), targetEndTime: '12:30' });
-    expect(input).toMatchObject({ startMinute: 540, slotMinutes: 22, targetEndMinute: 750 });
-    expect(input.teamIds).toHaveLength(4);
+  it('builds the shared timing from the draft', () => {
+    const timing = timingOf({ ...draftWithTeams(4), targetEndTime: '12:30' });
+    expect(timing).toMatchObject({ slotMinutes: 22, transitionMinutes: 5, targetEndMinute: 750 });
+    expect(timing.courtIds).toHaveLength(2);
   });
 
   it('CA2.3: any change to teams or settings marks the schedule stale', () => {
     const ids = counterIds();
-    const generated = generate(draftWithTeams(6));
-    expect(generated.schedule?.matches).toHaveLength(15);
+    const generated = generate(draftWithTeams(6), 1);
+    expect(generated.schedule?.matches).toHaveLength(6);
     expect(isScheduleStale(generated)).toBe(false);
     expect(isScheduleStale({ ...generated, name: 'Autre nom' })).toBe(false);
     expect(isScheduleStale(addTeams(generated, 'Nouvelle', ids).draft)).toBe(true);
@@ -146,7 +146,7 @@ describe('draft generation (SPEC F4, CA2.3)', () => {
   });
 
   it('refuses to generate an incomplete draft', () => {
-    expect(() => generate(draftWithTeams(1))).toThrow();
+    expect(() => generate(draftWithTeams(1), 1)).toThrow();
   });
 });
 

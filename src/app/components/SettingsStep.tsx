@@ -3,6 +3,7 @@ import { isSlotEstimate, suggestSlotMinutes } from '../../domain/format';
 import { LIMITS } from '../../domain/limits';
 import type { MatchFormat } from '../../domain/types';
 import {
+  MAX_LUNCH_MINUTES,
   renameCourt,
   resetSlotMinutes,
   setCourtCount,
@@ -20,6 +21,10 @@ const POINTS_DEFAULT: MatchFormat = {
   mode: 'all-sets',
 };
 const TIME_DEFAULT: MatchFormat = { kind: 'time', setCount: 2, minutesPerSet: 10 };
+const COURT_CHOICES = Array.from(
+  { length: LIMITS.maxCourts - LIMITS.minCourts + 1 },
+  (_, i) => LIMITS.minCourts + i,
+);
 
 export function SettingsStep({ draft, update }: StepProps) {
   const format = draft.matchFormat;
@@ -30,26 +35,18 @@ export function SettingsStep({ draft, update }: StepProps) {
     <div className="form">
       <fieldset className="fieldset">
         <legend>{fr.settings.courts}</legend>
-        <div className="stepper">
-          <button
-            type="button"
-            className="button button--icon"
-            aria-label={fr.settings.lessCourts}
-            disabled={draft.courts.length <= LIMITS.minCourts}
-            onClick={() => update((d) => setCourtCount(d, d.courts.length - 1, newId))}
-          >
-            −
-          </button>
-          <span className="stepper__value">{draft.courts.length}</span>
-          <button
-            type="button"
-            className="button button--icon"
-            aria-label={fr.settings.moreCourts}
-            disabled={draft.courts.length >= LIMITS.maxCourts}
-            onClick={() => update((d) => setCourtCount(d, d.courts.length + 1, newId))}
-          >
-            +
-          </button>
+        <div className="segmented" role="radiogroup" aria-label={fr.settings.courtCount}>
+          {COURT_CHOICES.map((count) => (
+            <label key={count} className="segmented__option">
+              <input
+                type="radio"
+                name="court-count"
+                checked={draft.courts.length === count}
+                onChange={() => update((d) => setCourtCount(d, count, newId))}
+              />
+              {count}
+            </label>
+          ))}
         </div>
         {draft.courts.map((court, i) => (
           <input
@@ -119,7 +116,7 @@ export function SettingsStep({ draft, update }: StepProps) {
           onChange={(m) => update((d) => setSlotMinutes(d, m))}
         />
         <p className="muted small">
-          {fr.settings.slotSuggested(suggested, isSlotEstimate(format))}{' '}
+          {fr.settings.slotHelp} {fr.settings.slotSuggested(suggested, isSlotEstimate(format))}{' '}
           {draft.slotMinutes !== suggested && (
             <button
               type="button"
@@ -137,6 +134,14 @@ export function SettingsStep({ draft, update }: StepProps) {
           max={LIMITS.maxTransitionMinutes}
           suffix={fr.common.minutes}
           onChange={(transitionMinutes) => update((d) => ({ ...d, transitionMinutes }))}
+        />
+        <NumberField
+          label={fr.settings.lunch}
+          value={draft.lunchMinutes}
+          min={0}
+          max={MAX_LUNCH_MINUTES}
+          suffix={fr.common.minutes}
+          onChange={(lunchMinutes) => update((d) => ({ ...d, lunchMinutes }))}
         />
         <label className="field">
           <span className="field__label">{fr.settings.targetEnd}</span>

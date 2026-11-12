@@ -3,7 +3,7 @@ import type { Draft } from '../app/draft/model';
 // Only module allowed to touch localStorage (AGENTS.md §4).
 // Drafts never leave the device until published (SPEC CA1.3).
 
-const DRAFTS_KEY = 'et:drafts:v1';
+const DRAFTS_KEY = 'et:drafts:v2';
 
 export interface KeyValueStore {
   getItem(key: string): string | null;
