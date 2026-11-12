@@ -34,6 +34,8 @@ Réglages attendus dans Cloudflare (Worker → Settings → Builds). Les onglets
 
 Sans build command, Wrangler échoue avec « The `assets` property … is missing the required `directory` property ».
 
+Les prévisualisations de branche ignorent actuellement la build command du tableau de bord (fonction en bêta) : `wrangler.jsonc` déclare donc `build.command` et `assets.directory`, que Wrangler utilise pour construire lui-même. Le plugin Vite ignore ces deux options (avertissement attendu au build).
+
 GitHub Actions (`.github/workflows/ci.yml`) exécute les vérifications sur chaque push et pull request ; il ne déploie pas.
 
 Après une modification de `wrangler.jsonc`, régénérer les types : `npm run cf-typegen`.
