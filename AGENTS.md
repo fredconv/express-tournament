@@ -67,6 +67,8 @@ npm run typecheck      # tsc -b (app, worker, config)
 npm run lint           # biome check
 npm run format         # biome check --write
 npm test               # vitest
+npm run test:coverage  # vitest + couverture (seuil 90 % sur src/domain)
+npm run schedule:demo -- 8 2   # planning en console, sans React
 npm run build          # vite build (client + worker)
 npm run check          # typecheck + lint + test + build
 npm run cf-typegen     # régénère worker-configuration.d.ts après une modif de wrangler.jsonc

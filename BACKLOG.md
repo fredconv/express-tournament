@@ -38,6 +38,7 @@ Priorité indicative : **P1** = première itération après V1, **P2** = ensuite
 | A15 | Durées de créneau différentes selon les matchs | P3 | Décision D1. |
 | A16 | Signalement de contenu abusif sur une page publique | P3 | Si abus constatés. |
 | A17 | Nom de domaine dédié | P2 | Décision D5. |
+| A19 | Optimiseur de repos plus fort (recherche locale / échanges de matchs) : 8 équipes / 3 terrains garde une série de 4 matchs pour une équipe | P2 | ADR-8, cas de référence. |
 
 ## Dette technique / qualité
 

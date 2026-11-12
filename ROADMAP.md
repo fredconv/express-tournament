@@ -28,10 +28,10 @@ Bloqué par : D5 (compte Cloudflare + dépôt GitHub).
 - Vérifier les quotas gratuits réels (Workers, D1, rate limiting, Time Travel) et corriger ARCHITECTURE.md si besoin. _(fait le 2026-11-12, ARCHITECTURE.md §3)_
 
 **DoD**
-- [ ] `https://…workers.dev/` affiche la page d'accueil sur un smartphone Android.
-- [ ] `GET /api/health` → 200 et lit D1 (une requête `SELECT 1`).
-- [ ] Un push sur `main` redéploie la production sans action manuelle.
-- [ ] Aucun secret dans le dépôt (`git grep` sur token/clé vide).
+- [ ] `https://…workers.dev/` affiche la page d'accueil sur un smartphone Android. _(en attente : test par l'utilisateur ; vérifié sur navigateur desktop)_
+- [x] `GET /api/health` → 200 et lit D1 (une requête `SELECT 1`). _(vérifié en production le 2026-11-12)_
+- [x] Un push sur `main` redéploie la production sans action manuelle. _(Workers Builds, vérifié le 2026-11-12)_
+- [x] Aucun secret dans le dépôt (`git grep` sur token/clé vide).
 
 ## E1 — Domaine et moteur de planification (M)
 Bloqué par : D1, D2.
@@ -42,9 +42,9 @@ Bloqué par : D1, D2.
 - Test d'architecture : `src/domain` n'importe rien d'autre que `zod`.
 
 **DoD**
-- [ ] CA4.1 à CA4.5, CA5.1 à CA5.4, CA3.1, CA3.2 automatisés et verts.
-- [ ] Couverture de lignes `src/domain` ≥ 90 %.
-- [ ] Un script `npm run schedule:demo -- 8 2` affiche un planning en console (preuve d'indépendance vis-à-vis de React).
+- [x] CA4.1 à CA4.5, CA5.1 à CA5.4, CA3.1, CA3.2 automatisés et verts.
+- [x] Couverture de lignes `src/domain` ≥ 90 %. _(99,5 % le 2026-11-12, seuil imposé par `npm run test:coverage`)_
+- [x] Un script `npm run schedule:demo -- 8 2` affiche un planning en console (preuve d'indépendance vis-à-vis de React).
 
 ## E2 — Éditeur organisateur local (M)
 Bloqué par : D3.

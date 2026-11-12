@@ -69,8 +69,8 @@ Les critères sont vérifiables par test automatisé (TA) ou recette manuelle (R
 - **Repos minimal** : « éviter qu'une équipe joue deux créneaux d'affilée » (activé par défaut).
 
 **Critères d'acceptation**
-- [ ] CA3.1 (TA) Format au temps 2 × 10 min → durée de créneau proposée = 22 min (sets + 2 min de changement de côté), modifiable.
-- [ ] CA3.2 (TA) Format aux points → une durée estimée est proposée (table §7 D1) et étiquetée « estimation ».
+- [x] CA3.1 (TA) Format au temps 2 × 10 min → durée de créneau proposée = 22 min (sets + 2 min de changement de côté), modifiable.
+- [x] CA3.2 (TA) Format aux points → une durée estimée est proposée (table §7 D1) et étiquetée « estimation ».
 - [ ] CA3.3 (TA) Toute valeur hors limites est refusée côté client **et** côté serveur.
 
 ### F4 — Génération automatique du calendrier (poule unique)
@@ -81,22 +81,22 @@ Les critères sont vérifiables par test automatisé (TA) ou recette manuelle (R
 - Le planning publié est **stocké** : une évolution future du moteur ne modifie jamais un planning déjà publié.
 
 **Critères d'acceptation**
-- [ ] CA4.1 (TA) Pour N de 2 à 32 et C de 1 à 16 : nombre de matchs = N(N−1)/2 et chaque paire apparaît une seule fois.
-- [ ] CA4.2 (TA) Pour N pair, C ≥ N/2 et repos désactivé : nombre de créneaux = N−1 (N impair : N).
-- [ ] CA4.3 (TA) Heures de début/fin cohérentes : début(créneau k) = début + k × (durée + battement).
-- [ ] CA4.4 (TA) Génération de 32 équipes / 16 terrains en moins de 200 ms sur un smartphone milieu de gamme (mesuré < 50 ms en Node).
-- [ ] CA4.5 (TA) Si l'heure de fin cible est dépassée, une alerte indique l'heure de fin réelle.
+- [x] CA4.1 (TA) Pour N de 2 à 32 et C de 1 à 16 : nombre de matchs = N(N−1)/2 et chaque paire apparaît une seule fois.
+- [x] CA4.2 (TA) Pour N pair, C ≥ N/2 et repos désactivé : nombre de créneaux = N−1 (N impair : N).
+- [x] CA4.3 (TA) Heures de début/fin cohérentes : début(créneau k) = début + k × (durée + battement).
+- [x] CA4.4 (TA) Génération de 32 équipes / 16 terrains en moins de 200 ms sur un smartphone milieu de gamme (mesuré < 50 ms en Node).
+- [x] CA4.5 (TA) Si l'heure de fin cible est dépassée, une alerte indique l'heure de fin réelle.
 
 ### F5 — Repos des équipes et absence de conflits
 - **Aucun conflit** (invariant absolu) : une équipe ne joue jamais deux matchs dans le même créneau ; un terrain n'accueille jamais deux matchs dans le même créneau.
-- **Repos** (règle souple) : si l'option est activée, une équipe ne joue pas deux créneaux consécutifs **lorsque c'est possible**. Le moteur ne laisse jamais un créneau entièrement vide pour respecter le repos ; il place alors un match et signale l'entorse.
+- **Repos** (règle souple) : la journée la plus courte passe d'abord (tous les terrains sont occupés tant qu'il reste des matchs jouables). À durée égale, si l'option est activée, le moteur minimise les matchs consécutifs et répartit ceux qui sont inévitables entre les équipes plutôt que d'allonger la série d'une même équipe. Chaque entorse est signalée.
 - **Équité** : à chaque créneau, priorité aux équipes qui attendent depuis le plus longtemps.
 
 **Critères d'acceptation**
-- [ ] CA5.1 (TA, test de propriété sur toutes les combinaisons N × C) Aucun conflit équipe ni terrain.
-- [ ] CA5.2 (TA) Avec repos activé, toute entorse au repos figure dans les alertes avec les équipes concernées ; sans alerte, aucune équipe ne joue deux créneaux consécutifs.
-- [ ] CA5.3 (TA) Cas de référence 8 équipes / 2 terrains / repos activé : 0 entorse au repos.
-- [ ] CA5.4 (TA) L'écart maximal de nombre de matchs joués entre deux équipes, à la fin de n'importe quel créneau, est documenté et ne régresse pas (test de non-régression sur cas de référence).
+- [x] CA5.1 (TA, test de propriété sur toutes les combinaisons N × C) Aucun conflit équipe ni terrain.
+- [x] CA5.2 (TA) Avec repos activé, toute entorse au repos figure dans les alertes avec les équipes concernées ; sans alerte, aucune équipe ne joue deux créneaux consécutifs.
+- [x] CA5.3 (TA) Le planning utilise le nombre minimal de créneaux sur les cas de référence ; à durée minimale, aucune équipe n'enchaîne plus de 2 matchs sur 8 équipes / 2 terrains, et les entorses au repos sont figées dans des cas de référence (non-régression). _Révisé le 2026-11-12 : « 0 entorse » est mathématiquement impossible en 14 créneaux pour 8 équipes / 2 terrains (chaque équipe devrait jouer un créneau sur deux, ce qui sépare les équipes en deux groupes qui ne se rencontrent jamais)._
+- [x] CA5.4 (TA) L'écart maximal de nombre de matchs joués entre deux équipes, à la fin de n'importe quel créneau, est documenté et ne régresse pas (test de non-régression sur cas de référence).
 
 ### F6 — Consultation du planning (PC et smartphone)
 - Page publique `/t/{idPublic}` lisible sans connexion de compte.
@@ -169,7 +169,7 @@ Saisie et validation des scores, classements, plusieurs poules, phases finales, 
 | # | Décision proposée (par défaut) | Pourquoi | Bloque |
 |---|---|---|---|
 | **D1** | Une **durée de créneau unique** pour tous les matchs. Au temps : sets × durée + 2 min par changement de côté. Aux points : estimation (25 pts ≈ 20 min/set, 21 pts ≈ 17, 15 pts ≈ 12) éditable. Le moteur ne connaît que cette durée. | Un match aux points n'a pas de durée fixe ; un créneau fixe garantit un planning lisible et sans chevauchement. | E1 |
-| **D2** | Repos = « pas deux créneaux d'affilée si possible », jamais de créneau vide imposé, entorses signalées. | Bon compromis durée totale / fatigue sans paramétrage complexe. | E1 |
+| **D2** | Repos = « pas deux créneaux d'affilée si possible », jamais de créneau vide imposé, entorses signalées. _Précisé le 2026-11-12 : la durée minimale de la journée prime ; le repos départage._ | Bon compromis durée totale / fatigue sans paramétrage complexe. | E1 |
 | **D3** | Toute modification d'équipes ou de configuration après publication **régénère le planning entier** (avec avertissement). Pas de replanification partielle en V1. | La replanification partielle (forfait en cours de tournoi) est complexe → backlog. | E2 |
 | **D4** | Gestion propriétaire par **code de gestion** sans compte ni e-mail. Perdre l'appareil **et** le code = perdre le droit de modifier (le tournoi reste consultable, puis expire). | Zéro inscription exigée par le besoin. Récupération par e-mail → backlog. | E3 |
 | **D5** | Hébergement **Cloudflare** (compte gratuit au nom de l'utilisateur), URL `*.workers.dev` au départ, nom de domaine plus tard. | Gratuit, pas de mise en veille, déploiement mondial. Voir ARCHITECTURE.md §3. | E0 |

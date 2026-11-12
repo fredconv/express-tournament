@@ -81,11 +81,13 @@ Bases D1 (région WEUR, binding `DB`) : `express-tournament-db` (production), `e
 ├─ src/
 │  ├─ domain/            # PUR : aucun import de react, hono, fetch, localStorage, Date.now
 │  │  ├─ types.ts        # Tournament, Team, Court, MatchFormat, ScheduledMatch…
-│  │  ├─ schemas.ts      # schémas Zod + limites (MAX_TEAMS…)
+│  │  ├─ limits.ts       # limites produit (MAX_TEAMS…)
+│  │  ├─ schemas.ts      # schémas Zod du document publié
 │  │  ├─ schedule/
 │  │  │  ├─ roundRobin.ts    # paires par méthode du cercle (Berger)
 │  │  │  ├─ assignSlots.ts   # placement créneaux × terrains, repos
 │  │  │  ├─ generate.ts      # point d'entrée generateSchedule()
+│  │  │  ├─ random.ts        # PRNG à graine fixe (rejeux déterministes)
 │  │  │  └─ validate.ts      # invariants (utilisé par tests ET serveur)
 │  │  ├─ format.ts       # durée suggérée, libellés de format
 │  │  └─ time.ts         # minutes depuis minuit ↔ "HH:mm"
@@ -159,13 +161,15 @@ function generateSchedule(input: ScheduleInput): {
 ### Algorithme (simple, déterministe, O(M × C × S))
 
 1. **Paires** : méthode du cercle (tables de Berger) → liste des N(N−1)/2 matchs ordonnés par « tour » (N impair : équipe fictive « exempt »). Cet ordre garantit déjà une bonne alternance.
-2. **Placement glouton par créneau** : pour chaque créneau `s`, parmi les matchs restants dont les deux équipes sont libres dans `s`, trier par :
-   (a) respect du repos (si activé), (b) attente cumulée des deux équipes décroissante, (c) ordre de tour Berger. Prendre jusqu'à C matchs sans réutiliser une équipe.
-3. Si le repos empêche de placer **le moindre** match alors qu'il en reste, relâcher la contrainte pour ce créneau et émettre `back-to-back`.
+2. **Placement glouton par créneau, journée la plus courte d'abord** : chaque créneau prend autant de matchs que de terrains, parmi ceux dont les deux équipes sont libres. Repos désactivé : ordre de Berger (optimal : N−1 ou N créneaux quand il y a assez de terrains). Repos activé, tri par :
+   (a) coût de fatigue = Σ (longueur de la série prolongée)² des équipes qui viennent de jouer, (b) nombre de matchs restants des deux équipes décroissant (goulots d'étranglement), (c) attente cumulée décroissante, (d) ordre de départage.
+3. **Rejeux déterministes** (repos activé) : le glouton ne voit pas la fin de journée ; il est rejoué jusqu'à 60 fois avec des ordres de départage pseudo-aléatoires **à graine fixe** (même entrée → même planning), dans un budget de calcul borné. On garde le meilleur (créneaux, puis plus longue série, puis nombre d'enchaînements) et on s'arrête dès que les bornes théoriques sont atteintes.
 4. Calcul des horaires : `start = startMinute + slot × (slotMinutes + transitionMinutes)`.
-5. `validateSchedule()` vérifie les invariants (paires uniques, complétude, aucun conflit équipe/terrain, horaires) ; il est appelé par les tests **et** par le serveur avant tout enregistrement.
+5. `validateSchedule()` vérifie les invariants (paires uniques, complétude, aucun conflit équipe/terrain, horaires, numérotation) ; il est appelé par les tests **et** par le serveur (via `tournamentDocSchema`) avant tout enregistrement.
 
-Le moteur est testé sans navigateur : tests unitaires + tests de propriétés exhaustifs (N 2..32 × C 1..16) + cas de référence figés (non-régression). Si la qualité du glouton est insuffisante sur un cas réel, on améliore `assignSlots.ts` seul, le contrat ne change pas.
+Le moteur est testé sans navigateur : tests unitaires + tests de propriétés exhaustifs (N 2..32 × C 1..16, repos activé et désactivé) + cas de référence figés (`tests/domain/reference.test.ts`) + test d'architecture (pureté de `src/domain`). Si la qualité du glouton est insuffisante sur un cas réel, on améliore `assignSlots.ts` seul, le contrat ne change pas.
+
+Mesures (Node, 2026-11-12) : 32 équipes / 16 terrains < 1 ms ; budget de calcul plafonné (rejeux ≤ 400 000 opérations) : toutes les tailles < 200 ms (test de performance hors couverture). Limite connue : 8 équipes / 3 terrains garde une série de 4 matchs pour une équipe (BACKLOG A19).
 
 ## 6. Modèle de données
 
@@ -310,5 +314,8 @@ Coût prévu : **0 €** (offres gratuites Workers + D1, sous-domaine `workers.d
 | ADR-5 | 2026-11-12 | PDF par impression navigateur, sans bibliothèque. | Acceptée |
 | ADR-6 | 2026-11-12 | Déploiement par Cloudflare Workers Builds ; GitHub Actions limité aux vérifications ; prévisualisations de branche sur une base D1 dédiée (exigé par Worker Previews). | Acceptée |
 | ADR-7 | 2026-11-12 | En-têtes de sécurité : `public/_headers` pour les fichiers statiques, middleware Hono pour `/api`. | Acceptée |
+| ADR-8 | 2026-11-12 | Moteur : journée la plus courte d'abord, repos en départage, rejeux à graine fixe ; CA5.3 révisé (0 entorse impossible à durée minimale). | Acceptée |
+| ADR-9 | 2026-11-12 | Dépendances E1 : `zod` (schémas partagés), `tsx` (exécuter `scripts/*.ts` sans build), `@vitest/coverage-v8` (seuil de couverture du domaine). | Acceptée |
+| ADR-10 | 2026-11-12 | Prévisualisations de branche : `build.command` et `assets.directory` dans `wrangler.jsonc`, Workers Builds ignorant la build command des previews. | Acceptée |
 
 Toute nouvelle dépendance ou changement d'architecture ajoute une ligne ici.
