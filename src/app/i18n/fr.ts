@@ -51,6 +51,7 @@ export const fr = {
     courts: 'Terrains',
     courtCount: 'Nombre de terrains',
     courtName: (n: number) => `Nom du terrain ${n}`,
+    courtColor: (n: number) => `Couleur du terrain ${n}`,
     timing: 'Horaires',
     startTime: 'Début',
     targetEnd: 'Fin souhaitée (optionnel)',
@@ -106,6 +107,15 @@ export const fr = {
     finalStale: 'Des scores de la poule Or ont changé : régénérez la finale.',
     regenerateFinal: 'Régénérer la finale',
     winner: (name: string) => `Vainqueur du tournoi : ${name}`,
+    simultaneous: (n: number) => (n > 1 ? `${n} matchs en même temps` : '1 match'),
+    consecutive: (names: string) => `Enchaîne : ${names}`,
+    filtered: (name: string, n: number) =>
+      `Planning filtré : ${name} · ${n} match${n > 1 ? 's' : ''}`,
+    showAll: 'Toutes les équipes',
+    noMatchForTeam: 'Aucun match de cette équipe dans cette phase.',
+    legend: 'Légende',
+    legendConsecutive:
+      'équipe qui joue deux créneaux de suite, sans repos (information, pas une erreur)',
   },
   score: {
     enter: 'Saisir le score',

@@ -143,12 +143,24 @@ _Moteur existant (E1) conservé tel quel ; aucune optimisation supplémentaire e
 - [x] CA12.2 (TA) La première poule de l'après-midi contient les meilleures équipes du classement général.
 - [x] CA12.3 (TA) La finale oppose les deux premiers de la première poule de l'après-midi, une fois tous ses matchs saisis.
 
+### F13 — Lisibilité du planning (demandée par l'utilisateur le 2026-11-13)
+- Chaque terrain a une couleur, attribuée automatiquement (palette de 6 tons sombres) et modifiable dans les réglages. Elle apparaît en badge (avec le nom du terrain) et en bordure, jamais en fond de ligne, dans les réglages, l'éditeur, la page publique et l'impression.
+- Une équipe qui joue deux créneaux consécutifs de la même phase est signalée sur les deux matchs par un marqueur orange « ↻ Enchaîne : <équipe> » (information, pas une erreur), calculé à partir du planning.
+- _Corrigé le 2026-11-13 à la demande de l'utilisateur :_ pas de mise en évidence au survol ou au toucher (perdue au défilement). Le sélecteur d'équipe existant filtre le planning : seuls les matchs de l'équipe restent affichés (les autres sont masqués, pas supprimés), avec horaires, terrains, numéros et poules, le nombre de matchs, un indicateur « Planning filtré » et un bouton « Toutes les équipes ». Même composant dans l'éditeur et sur la page publique.
+- Créneaux horaires plus visibles avec le nombre de matchs joués en même temps ; légende compacte (terrains, marqueur d'enchaînement, mode d'emploi de la mise en évidence).
+- Aucune information transmise par la seule couleur ; contrastes AA ; impression lisible en noir et blanc.
+
+**Critères d'acceptation**
+- [x] CA13.1 (TA) Couleurs de la palette distinctes et contraste ≥ 4,5 avec le texte du badge ; couleur personnalisée claire → texte noir.
+- [x] CA13.2 (TA) Les enchaînements détectés couvrent les deux matchs et toutes les équipes concernées, et concordent avec les alertes du moteur.
+- [ ] CA13.3 (RM) Planning lisible sur téléphone, ordinateur et PDF (couleur et noir et blanc).
+
 ### F6 — Consultation du planning (PC et smartphone)
 - Page publique `/t/{idPublic}` lisible sans connexion de compte.
 - Mobile (≥ 360 px) : liste chronologique groupée par créneau (heure, terrain, équipes, n° de match).
 - PC : grille créneaux × terrains.
 - Scores saisis et classements des poules.
-- Filtre « Mon équipe » mémorisé sur l'appareil.
+- Filtre « Mon équipe » mémorisé sur l'appareil (page publique) : seuls ses matchs sont affichés, avec leur nombre et un retour « Toutes les équipes » ; l'impression reprend la vue filtrée.
 - Date de dernière mise à jour ; bouton « Actualiser ».
 
 **Critères d'acceptation**

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { getTournament, type PublishedTournament } from '../../client/api';
 import { deviceStore } from '../../client/storage';
-import { Champion, DaySummary, PhaseSection, TeamFilter } from '../components/DayView';
+import { Champion, DaySummary, Legend, PhaseSection, TeamFilter } from '../components/DayView';
 import { fromDoc } from '../draft/publish';
 import { fr } from '../i18n/fr';
 
@@ -75,6 +75,7 @@ export function PublicPage() {
       </header>
 
       <TeamFilter draft={draft} teamId={selected} onChange={chooseTeam} />
+      <Legend draft={draft} />
       <Champion draft={draft} />
       {draft.final && (
         <PhaseSection

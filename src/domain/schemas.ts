@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isCourtColor } from './courtColors';
 import { suggestSlotMinutes } from './format';
 import { LIMITS } from './limits';
 import { normalizeName } from './names';
@@ -20,7 +21,11 @@ const int = (min: number, max: number) => z.number().int().min(min).max(max);
 const timeSchema = z.string().refine(isValidTime, 'invalid time');
 
 export const teamSchema = z.object({ id: idSchema, name: label(LIMITS.teamNameMax) });
-export const courtSchema = z.object({ id: idSchema, name: label(LIMITS.courtNameMax) });
+export const courtSchema = z.object({
+  id: idSchema,
+  name: label(LIMITS.courtNameMax),
+  color: z.string().refine(isCourtColor, 'invalid color').optional(),
+});
 
 export const matchFormatSchema = z.discriminatedUnion('kind', [
   z.object({

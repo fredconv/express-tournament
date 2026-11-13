@@ -1,4 +1,5 @@
 import { newId } from '../../client/ids';
+import { courtColor } from '../../domain/courtColors';
 import { isSlotEstimate } from '../../domain/format';
 import { LIMITS } from '../../domain/limits';
 import type { MatchFormat } from '../../domain/types';
@@ -6,6 +7,7 @@ import {
   MAX_LUNCH_MINUTES,
   matchMinutesOf,
   renameCourt,
+  setCourtColor,
   setCourtCount,
   setMatchFormat,
 } from '../draft/model';
@@ -47,14 +49,22 @@ export function SettingsStep({ draft, update }: StepProps) {
           ))}
         </div>
         {draft.courts.map((court, i) => (
-          <input
-            key={court.id}
-            className={`input${court.name.trim() === '' ? ' input--invalid' : ''}`}
-            value={court.name}
-            maxLength={LIMITS.courtNameMax}
-            aria-label={fr.settings.courtName(i + 1)}
-            onChange={(e) => update((d) => renameCourt(d, court.id, e.target.value))}
-          />
+          <div key={court.id} className="court-row">
+            <input
+              className="court-row__color"
+              type="color"
+              value={courtColor(court, i)}
+              aria-label={fr.settings.courtColor(i + 1)}
+              onChange={(e) => update((d) => setCourtColor(d, court.id, e.target.value))}
+            />
+            <input
+              className={`input${court.name.trim() === '' ? ' input--invalid' : ''}`}
+              value={court.name}
+              maxLength={LIMITS.courtNameMax}
+              aria-label={fr.settings.courtName(i + 1)}
+              onChange={(e) => update((d) => renameCourt(d, court.id, e.target.value))}
+            />
+          </div>
         ))}
       </fieldset>
 

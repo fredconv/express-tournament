@@ -88,6 +88,13 @@ Dans l'éditeur local existant, sans nouvelle couche d'architecture : quelques f
 - [x] En-têtes de sécurité vérifiés sur la prévisualisation (`curl -I`, 2026-11-12 : CSP, nosniff, no-referrer, DENY ; API no-store + noindex).
 - [ ] RM : QR scanné depuis un autre téléphone ; PDF lisible depuis Chrome Android (CA7.1, CA8.1).
 
+## E4.1 — Lisibilité du planning (S)
+Demandée par l'utilisateur le 2026-11-13 (SPEC F13). Aucune règle du moteur modifiée, aucune dépendance.
+
+**DoD**
+- [x] CA13.1, CA13.2 automatisés et verts.
+- [x] CA13.3 vérifié sur la prévisualisation le 2026-11-13 : mobile 375 px (badges, en-têtes de créneau, marqueurs, mise en évidence 3 matchs / 19 atténués), ordinateur 1280 px (grille, survol), règles d'impression forcées en A4 couleur et en niveaux de gris ; aucune erreur console (CSP). Reste : un vrai PDF depuis Chrome Android.
+
 ## E5 — Mise en production et tournoi réel (S)
 
 - Fusion sur `main`, migration D1 appliquée, production vérifiée.

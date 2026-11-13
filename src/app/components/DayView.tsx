@@ -1,10 +1,11 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
+import { courtColor, textColorOn } from '../../domain/courtColors';
 import { outcome } from '../../domain/scores';
 import { poolStandings } from '../../domain/standings';
 import { formatTime } from '../../domain/time';
 import type { PoolInput, ScheduledMatch, ScheduleResult } from '../../domain/types';
 import { describeFormat } from '../draft/labels';
-import { type Draft, exceedsTargetEnd } from '../draft/model';
+import { type Draft, exceedsTargetEnd, teamMatchCount } from '../draft/model';
 import { fr } from '../i18n/fr';
 import { ScheduleView } from './ScheduleView';
 import { StandingsTable } from './StandingsTable';
@@ -53,6 +54,9 @@ export function PhaseSection({
           ))}
         </div>
       )}
+      {teamId && !schedule.matches.some((m) => m.teamAId === teamId || m.teamBId === teamId) && (
+        <p className="muted small">{fr.planning.noMatchForTeam}</p>
+      )}
       <ScheduleView
         matches={schedule.matches}
         teams={draft.teams}
@@ -84,6 +88,10 @@ export function DaySummary({ draft }: { draft: Draft }) {
   );
 }
 
+/**
+ * The single team selector (SPEC F6): only the selected team's matches are shown,
+ * the others are hidden (not deleted). Shared by the editor and the public page.
+ */
 export function TeamFilter({
   draft,
   teamId,
@@ -94,21 +102,60 @@ export function TeamFilter({
   onChange: (teamId: string | null) => void;
 }) {
   return (
-    <label className="field no-print">
-      <span className="field__label">{fr.planning.filter}</span>
-      <select
-        className="input"
-        value={teamId ?? ''}
-        onChange={(e) => onChange(e.target.value || null)}
-      >
-        <option value="">{fr.planning.allTeams}</option>
-        {draft.teams.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.name}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div className={`team-filter${teamId ? ' team-filter--active' : ''}`}>
+      <label className="field no-print">
+        <span className="field__label">{fr.planning.filter}</span>
+        <select
+          className="input"
+          value={teamId ?? ''}
+          onChange={(e) => onChange(e.target.value || null)}
+        >
+          <option value="">{fr.planning.allTeams}</option>
+          {draft.teams.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      {teamId && (
+        <p className="team-filter__status" role="status">
+          <span>
+            <span aria-hidden="true">⏷ </span>
+            {fr.planning.filtered(teamNameOf(draft)(teamId), teamMatchCount(draft, teamId))}
+          </span>
+          <button type="button" className="button" onClick={() => onChange(null)}>
+            {fr.planning.showAll}
+          </button>
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Court colors and back-to-back marker (SPEC F13). */
+export function Legend({ draft }: { draft: Draft }) {
+  return (
+    <div className="legend">
+      <p className="legend__title">{fr.planning.legend}</p>
+      <ul className="legend__items">
+        {draft.courts.map((court, i) => {
+          const color = courtColor(court, i);
+          const style = { '--court': color, '--court-text': textColorOn(color) } as CSSProperties;
+          return (
+            <li key={court.id}>
+              <span className="court-badge" style={style}>
+                {court.name}
+              </span>
+            </li>
+          );
+        })}
+        <li>
+          <span className="consecutive consecutive--sample">↻ {fr.planning.consecutive('…')}</span>{' '}
+          <span className="small">{fr.planning.legendConsecutive}</span>
+        </li>
+      </ul>
+    </div>
   );
 }
 

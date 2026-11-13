@@ -17,7 +17,7 @@ import {
   setResult,
 } from '../draft/model';
 import { fr } from '../i18n/fr';
-import { Champion, DaySummary, PhaseSection, TeamFilter, teamNameOf } from './DayView';
+import { Champion, DaySummary, Legend, PhaseSection, TeamFilter, teamNameOf } from './DayView';
 import { ScoreForm } from './ScoreForm';
 import type { StepProps } from './stepProps';
 
@@ -91,6 +91,7 @@ export function PlanningStep({ draft, update }: StepProps) {
         <div className={stale ? 'planning planning--stale' : 'planning'}>
           <DaySummary draft={draft} />
           <TeamFilter draft={draft} teamId={selectedTeam} onChange={setTeamId} />
+          <Legend draft={draft} />
           <PhaseSection
             {...phaseProps}
             title={fr.planning.morning}
