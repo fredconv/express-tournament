@@ -362,7 +362,7 @@ a {
 
 .team-list__item {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) 8.5rem auto;
   align-items: center;
   gap: 0.25rem;
 }
@@ -771,6 +771,21 @@ a.button {
   border-radius: var(--radius);
   background: var(--color-info-bg);
   font-weight: 600;
+}
+
+.team-list__pool {
+  padding-right: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.team-list__pool--locked {
+  border: 2px solid var(--color-text);
+  background: var(--color-highlight);
+  font-weight: 700;
+}
+
+.team-list__item .field__error {
+  grid-column: 1 / -1;
 }
 
 .legend {

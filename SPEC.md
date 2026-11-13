@@ -119,12 +119,14 @@ _Moteur existant (E1) conservé tel quel ; aucune optimisation supplémentaire e
 ### F10 — Poules du matin
 - Nombre de poules calculé automatiquement : poules de 3 à 5 équipes, tailles équilibrées (écart ≤ 1), taille visée 4 (D10). Moins de 6 équipes : une seule poule.
 - Répartition par tirage au sort ; bouton « Nouveau tirage » tant qu'aucun score n'est saisi.
+- _Ajouté le 2026-11-13 à la demande de l'utilisateur :_ dans l'onglet Équipes, chaque équipe est « Aléatoire » (par défaut) ou verrouillée dans une poule (« 🔒 Poule A »…). Une équipe verrouillée reste dans sa poule à chaque tirage ; les autres remplissent les places restantes au hasard, tailles de poule inchangées. Si un verrouillage n'est plus possible (poule disparue après un changement du nombre d'équipes, plus d'équipes verrouillées que de places), le tirage est bloqué avec un message ; une équipe verrouillée n'est jamais déplacée en silence. Pas de niveaux de force ni de têtes de série automatiques.
 - Toutes les poules se jouent en même temps sur les terrains partagés (F4).
 
 **Critères d'acceptation**
 - [x] CA10.1 (TA) Pour N de 3 à 32 : tailles de poule dans 3–5 (N < 6 : une poule de N), écart ≤ 1.
 - [x] CA10.2 (TA) 13, 14, 15 équipes → 5-4-4, 4-4-3-3, 4-4-4-3.
 - [x] CA10.3 (TA) Même graine → même tirage ; chaque équipe est dans exactement une poule.
+- [x] CA10.4 (TA) Verrouillages : aucun (tirage identique au tirage aléatoire), un, plusieurs, poule entièrement verrouillée, configuration impossible (refus) ; les équipes verrouillées restent dans leur poule sur 100 tirages successifs.
 
 ### F11 — Scores et classements
 - L'organisateur saisit le score de chaque match set par set ; il peut le corriger ou l'effacer.
