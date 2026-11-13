@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import { newId } from '../../client/ids';
 import { LIMITS } from '../../domain/limits';
+import { poolSizes } from '../../domain/pools';
 import {
   type AddTeamsResult,
   addTeams,
+  locksOf,
+  morningPoolCount,
+  poolLockIssues,
   removeTeam,
   renameTeam,
+  setPoolLock,
   teamNameIssue,
 } from '../draft/model';
 import { fr } from '../i18n/fr';
@@ -55,6 +60,7 @@ export function TeamsStep({ draft, update }: StepProps) {
       )}
 
       <p className="muted small">{fr.teams.count(draft.teams.length, LIMITS.maxTeams)}</p>
+      {draft.teams.length >= LIMITS.minTeams && <PoolLockSummary draft={draft} />}
       {draft.teams.length === 0 ? (
         <p className="muted">{fr.teams.empty}</p>
       ) : (
@@ -63,6 +69,9 @@ export function TeamsStep({ draft, update }: StepProps) {
             <TeamRow
               key={team.id}
               name={team.name}
+              lock={locksOf(draft)[team.id] ?? null}
+              poolCount={morningPoolCount(draft)}
+              onLock={(poolIndex) => update((d) => setPoolLock(d, team.id, poolIndex))}
               issue={(name) => teamNameIssue(draft.teams, name, team.id)}
               onRename={(name) => update((d) => renameTeam(d, team.id, name))}
               onRemove={() => update((d) => removeTeam(d, team.id))}
@@ -74,14 +83,47 @@ export function TeamsStep({ draft, update }: StepProps) {
   );
 }
 
+const letter = (index: number) => String.fromCharCode(65 + index);
+
+/** Planned pools, number of locked teams and locks that can no longer be honoured. */
+function PoolLockSummary({ draft }: Pick<StepProps, 'draft'>) {
+  const sizes = poolSizes(draft.teams.length).join('-');
+  const locked = draft.teams.filter((t) => locksOf(draft)[t.id] !== undefined).length;
+  const issues = poolLockIssues(draft);
+  const name = (id: string) => draft.teams.find((t) => t.id === id)?.name ?? '?';
+  return (
+    <>
+      <p className="small">
+        <strong>{fr.teams.poolsPlanned(sizes, locked)}</strong>
+        <br />
+        <span className="muted">{fr.teams.lockHelp}</span>
+      </p>
+      {issues.length > 0 && (
+        <div className="notice notice--warning" role="alert">
+          {issues.map((issue) => (
+            <p key={issue.kind === 'missing-pool' ? issue.teamId : `pool-${issue.poolIndex}`}>
+              {issue.kind === 'missing-pool'
+                ? fr.teams.lockIssue.missing(name(issue.teamId), letter(issue.poolIndex))
+                : fr.teams.lockIssue.over(letter(issue.poolIndex), issue.locked, issue.capacity)}
+            </p>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 interface TeamRowProps {
   name: string;
+  lock: number | null;
+  poolCount: number;
+  onLock: (poolIndex: number | null) => void;
   issue: (name: string) => keyof typeof fr.teams.issue | null;
   onRename: (name: string) => void;
   onRemove: () => void;
 }
 
-function TeamRow({ name, issue, onRename, onRemove }: TeamRowProps) {
+function TeamRow({ name, lock, poolCount, onLock, issue, onRename, onRemove }: TeamRowProps) {
   const [value, setValue] = useState(name);
   const problem = value === name ? null : issue(value);
 
@@ -103,6 +145,22 @@ function TeamRow({ name, issue, onRename, onRemove }: TeamRowProps) {
           if (e.key === 'Enter') e.currentTarget.blur();
         }}
       />
+      <select
+        className={`input team-list__pool${lock === null ? '' : ' team-list__pool--locked'}`}
+        value={lock ?? ''}
+        aria-label={fr.teams.poolChoice(name)}
+        onChange={(e) => onLock(e.target.value === '' ? null : Number(e.target.value))}
+      >
+        <option value="">{fr.teams.random}</option>
+        {Array.from({ length: poolCount }, (_, i) => (
+          <option key={letter(i)} value={i}>
+            {fr.teams.lockedPool(letter(i))}
+          </option>
+        ))}
+        {lock !== null && lock >= poolCount && (
+          <option value={lock}>{fr.teams.missingPool(letter(lock))}</option>
+        )}
+      </select>
       <button
         type="button"
         className="button button--ghost button--icon"

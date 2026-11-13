@@ -2,7 +2,7 @@ import { defaultCourtColor, isCourtColor } from '../../domain/courtColors';
 import { suggestSlotMinutes } from '../../domain/format';
 import { LIMITS } from '../../domain/limits';
 import { normalizeName } from '../../domain/names';
-import { drawPools } from '../../domain/pools';
+import { drawPools, lockIssues, type PoolLocks, poolSizes } from '../../domain/pools';
 import { schedulePools } from '../../domain/schedule/generate';
 import { type SetScore, scoreIssue } from '../../domain/scores';
 import {
@@ -51,6 +51,8 @@ export interface Draft {
   lunchMinutes: number;
   courts: Court[];
   teams: NamedItem[];
+  /** Teams locked in a morning pool (team id → pool index); missing on older drafts. */
+  poolLocks?: Record<string, number> | undefined;
   /** Seed of the morning pool draw. */
   drawSeed: number | null;
   /** Morning pools, in draw order. */
@@ -164,7 +166,32 @@ export function renameTeam(draft: Draft, id: string, name: string): Draft {
 }
 
 export function removeTeam(draft: Draft, id: string): Draft {
-  return { ...draft, teams: draft.teams.filter((t) => t.id !== id) };
+  const { [id]: _removed, ...poolLocks } = locksOf(draft);
+  return { ...draft, teams: draft.teams.filter((t) => t.id !== id), poolLocks };
+}
+
+// ---------- Pool locks (SPEC F10) ----------
+
+export function locksOf(draft: Draft): PoolLocks {
+  return draft.poolLocks ?? {};
+}
+
+/** Number of morning pools for the current team count. */
+export function morningPoolCount(draft: Draft): number {
+  return poolSizes(draft.teams.length).length;
+}
+
+/** Locks a team in a pool (0 = A), or back to random with `null`. */
+export function setPoolLock(draft: Draft, teamId: string, poolIndex: number | null): Draft {
+  const { [teamId]: _previous, ...others } = locksOf(draft);
+  return { ...draft, poolLocks: poolIndex === null ? others : { ...others, [teamId]: poolIndex } };
+}
+
+export function poolLockIssues(draft: Draft) {
+  return lockIssues(
+    draft.teams.map((t) => t.id),
+    locksOf(draft),
+  );
 }
 
 // ---------- Courts and settings (SPEC F3) ----------
@@ -212,6 +239,7 @@ export type DraftIssue =
   | 'invalid-slot-minutes'
   | 'invalid-transition'
   | 'invalid-lunch'
+  | 'pool-locks'
   | 'court-name-missing';
 
 /** Issues that block schedule generation, in display order. */
@@ -231,6 +259,7 @@ export function draftIssues(draft: Draft): DraftIssue[] {
     issues.push('invalid-transition');
   }
   if (!isIntIn(draft.lunchMinutes, 0, MAX_LUNCH_MINUTES)) issues.push('invalid-lunch');
+  if (poolLockIssues(draft).length > 0) issues.push('pool-locks');
   if (draft.courts.some((c) => c.name.trim() === '')) issues.push('court-name-missing');
   return issues;
 }
@@ -263,6 +292,7 @@ function scheduleKeyOf(draft: Draft): string {
     start: draft.startTime,
     lunch: draft.lunchMinutes,
     seed: draft.drawSeed,
+    locks: draft.teams.map((t) => locksOf(draft)[t.id] ?? null),
     ...timing,
   });
 }
@@ -282,6 +312,7 @@ export function generate(draft: Draft, seed: number): Draft {
   const pools = drawPools(
     draft.teams.map((t) => t.id),
     seed,
+    locksOf(draft),
   );
   const schedule = schedulePools({
     ...timingOf(draft),

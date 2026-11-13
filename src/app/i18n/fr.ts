@@ -39,6 +39,20 @@ export const fr = {
     empty: 'Aucune équipe. Collez une liste ou tapez un nom par ligne.',
     rename: (name: string) => `Renommer ${name}`,
     remove: (name: string) => `Supprimer ${name}`,
+    poolChoice: (name: string) => `Poule de ${name}`,
+    random: 'Aléatoire',
+    lockedPool: (letter: string) => `🔒 Poule ${letter}`,
+    missingPool: (letter: string) => `🔒 Poule ${letter} (n’existe plus)`,
+    poolsPlanned: (sizes: string, locked: number) =>
+      `Poules prévues : ${sizes}${locked > 0 ? ` · ${locked} équipe${locked > 1 ? 's' : ''} verrouillée${locked > 1 ? 's' : ''}` : ''}`,
+    lockHelp:
+      'Pour séparer des favoris, verrouillez-les dans une poule : ils y restent à chaque tirage, les autres équipes sont tirées au sort.',
+    lockIssue: {
+      missing: (team: string, letter: string) =>
+        `${team} est verrouillée en poule ${letter}, qui n’existe plus avec ce nombre d’équipes.`,
+      over: (letter: string, locked: number, capacity: number) =>
+        `Poule ${letter} : ${locked} équipes verrouillées pour ${capacity} places.`,
+    },
     added: (n: number) => `${n} équipe${n > 1 ? 's' : ''} ajoutée${n > 1 ? 's' : ''}.`,
     issue: {
       empty: 'nom vide',
@@ -150,6 +164,7 @@ export const fr = {
     'invalid-slot-minutes': 'avec ce format, un match durerait moins de 5 min ou plus de 240 min',
     'invalid-transition': 'la rotation doit être entre 0 et 30 min',
     'invalid-lunch': 'la pause de midi doit être entre 0 et 180 min',
+    'pool-locks': 'corrigez les équipes verrouillées dans une poule (onglet Équipes)',
     'court-name-missing': 'chaque terrain doit avoir un nom',
   },
   warnings: {
