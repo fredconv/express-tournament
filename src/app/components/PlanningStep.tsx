@@ -90,10 +90,10 @@ export function PlanningStep({ draft, update }: StepProps) {
       {morning && (
         <div className={stale ? 'planning planning--stale' : 'planning'}>
           <DaySummary draft={draft} />
-          <TeamFilter draft={draft} teamId={selectedTeam} onChange={setTeamId} />
           <Legend draft={draft} />
           <PhaseSection
             {...phaseProps}
+            beforeSchedule={<TeamFilter draft={draft} teamId={selectedTeam} onChange={setTeamId} />}
             title={fr.planning.morning}
             pools={draft.pools}
             schedule={morning}
