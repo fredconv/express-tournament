@@ -104,10 +104,13 @@ export function TeamFilter({
   draft,
   teamId,
   onChange,
+  teamActions,
 }: {
   draft: Draft;
   teamId: string | null;
   onChange: (teamId: string | null) => void;
+  /** Editor only: actions on the selected team (withdrawal). */
+  teamActions?: ReactNode;
 }) {
   return (
     <div className={`team-filter${teamId ? ' team-filter--active' : ''}`}>
@@ -121,7 +124,7 @@ export function TeamFilter({
           <option value="">{fr.planning.allTeams}</option>
           {draft.teams.map((t) => (
             <option key={t.id} value={t.id}>
-              {t.name}
+              {teamNameOf(draft)(t.id)}
             </option>
           ))}
         </select>
@@ -137,6 +140,7 @@ export function TeamFilter({
           </button>
         </p>
       )}
+      {teamId && teamActions}
     </div>
   );
 }
@@ -197,9 +201,11 @@ function Warnings({ draft, schedule }: { draft: Draft; schedule: ScheduleResult 
   );
 }
 
+/** Team names; withdrawn teams are marked so tables and the filter stay explicit. */
 export function teamNameOf(draft: Draft) {
   const names = new Map(draft.teams.map((t) => [t.id, t.name]));
-  return (id: string) => names.get(id) ?? '?';
+  const gone = new Set(draft.withdrawn ?? []);
+  return (id: string) => (names.get(id) ?? '?') + (gone.has(id) ? fr.planning.withdrawnSuffix : '');
 }
 
 /** "Poule A"… in the morning, "Poule Or"… in the afternoon, "Finale". */

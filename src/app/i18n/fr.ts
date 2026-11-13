@@ -126,6 +126,12 @@ export const fr = {
     filtered: (name: string, n: number) =>
       `Planning filtré : ${name} · ${n} match${n > 1 ? 's' : ''}`,
     showAll: 'Toutes les équipes',
+    withdraw: 'Équipe partie : forfait sur ses matchs restants',
+    confirmWithdraw: (name: string) =>
+      `${name} quitte le tournoi : tous ses matchs sans score deviennent des forfaits, et elle ne sera pas placée dans les phases suivantes. Continuer ?`,
+    withdrawn: 'Équipe retirée du tournoi',
+    reinstate: 'Réintégrer l’équipe',
+    withdrawnSuffix: ' (retirée)',
     noMatchForTeam: 'Aucun match de cette équipe dans cette phase.',
     legend: 'Légende',
     legendConsecutive:
@@ -139,6 +145,9 @@ export const fr = {
     clear: 'Effacer le score',
     cancel: 'Annuler',
     extraSet: 'Set décisif (si égalité)',
+    forfeitHelp: 'Match non joué (blessure, équipe absente…) :',
+    forfeitOf: (name: string) => `Forfait de ${name}`,
+    forfeitBy: (name: string) => `forfait de ${name}`,
     issue: {
       'invalid-points': 'chaque set doit avoir deux scores entre 0 et 99',
       'tied-set': 'un set ne peut pas finir à égalité',

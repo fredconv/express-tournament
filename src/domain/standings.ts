@@ -1,10 +1,10 @@
 import { splitIntoPools } from './pools';
-import { outcome, type SetScore } from './scores';
+import { type MatchResult, outcome } from './scores';
 import type { PoolInput, ScheduledMatch } from './types';
 
 // Pool rankings and afternoon pools (SPEC F11/F12, decisions D11/D12).
 
-export type Results = Readonly<Record<string, readonly SetScore[]>>;
+export type Results = Readonly<Record<string, MatchResult>>;
 
 export interface StandingRow {
   teamId: string;

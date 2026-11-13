@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { consecutiveTeams } from '../../domain/consecutive';
 import { courtColor, textColorOn } from '../../domain/courtColors';
-import { outcome } from '../../domain/scores';
+import { isForfeit, outcome } from '../../domain/scores';
 import type { Results } from '../../domain/standings';
 import { formatTime } from '../../domain/time';
 import type { ScheduledMatch } from '../../domain/types';
@@ -56,7 +56,15 @@ export function ScheduleView(props: ScheduleViewProps) {
       <>
         <span className="match-card__teams">
           {team(m.teamAId, winner === 'a')}
-          <span className="match-card__vs">{sets ? formatScore(sets) : fr.planning.vs}</span>
+          <span
+            className={`match-card__vs${sets && isForfeit(sets) ? ' match-card__vs--forfeit' : ''}`}
+          >
+            {!sets
+              ? fr.planning.vs
+              : isForfeit(sets)
+                ? fr.score.forfeitBy(name(sets.forfeit === 'a' ? m.teamAId : m.teamBId))
+                : formatScore(sets)}
+          </span>
           {team(m.teamBId, winner === 'b')}
         </span>
         {tired && (
