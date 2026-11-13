@@ -93,7 +93,7 @@ Demandée par l'utilisateur le 2026-11-13 (SPEC F13). Aucune règle du moteur mo
 
 **DoD**
 - [x] CA13.1, CA13.2 automatisés et verts.
-- [ ] CA13.3 vérifié sur la prévisualisation (mobile, ordinateur, aperçu d'impression).
+- [x] CA13.3 vérifié sur la prévisualisation le 2026-11-13 : mobile 375 px (badges, en-têtes de créneau, marqueurs, mise en évidence 3 matchs / 19 atténués), ordinateur 1280 px (grille, survol), règles d'impression forcées en A4 couleur et en niveaux de gris ; aucune erreur console (CSP). Reste : un vrai PDF depuis Chrome Android.
 
 ## E5 — Mise en production et tournoi réel (S)
 
