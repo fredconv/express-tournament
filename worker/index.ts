@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { securityHeaders } from './securityHeaders';
+import { tournaments } from './tournaments';
 
 export const app = new Hono<{ Bindings: Env }>().basePath('/api');
 
@@ -11,6 +12,8 @@ app.get('/health', async (c) => {
     ? c.json({ status: 'ok', db: 'ok' })
     : c.json({ status: 'degraded', db: 'unavailable' }, 503);
 });
+
+app.route('/tournaments', tournaments);
 
 app.notFound((c) => c.json({ error: 'not_found' }, 404));
 

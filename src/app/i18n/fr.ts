@@ -15,8 +15,7 @@ export const fr = {
     untitled: 'Tournoi sans nom',
     teamsCount: (n: number) => `${n} équipe${n > 1 ? 's' : ''}`,
     confirmDelete: 'Supprimer définitivement ce brouillon ?',
-    localOnly:
-      'Les brouillons restent sur cet appareil. La publication et le QR code arrivent bientôt.',
+    localOnly: 'Les tournois restent sur cet appareil tant qu’ils ne sont pas publiés.',
     noStorage:
       'Le stockage local est désactivé dans ce navigateur : le brouillon sera perdu à la fermeture.',
   },
@@ -155,6 +154,46 @@ export const fr = {
     bestOf: (wins: number, points: number) =>
       `${wins} set${wins > 1 ? 's' : ''} gagnant${wins > 1 ? 's' : ''} de ${points} pts`,
     decidingSet: (points: number) => `, dernier set à ${points} pts`,
+  },
+  publish: {
+    publish: 'Publier le planning',
+    publishing: 'Publication…',
+    update: 'Publier les mises à jour',
+    upToDate: 'Publié : les participants voient la dernière version.',
+    pending: 'Modifications non publiées : les participants voient encore l’ancienne version.',
+    viewPublic: 'Page publique',
+    showQr: 'Afficher le QR code',
+    issue: {
+      incomplete: 'Complétez les infos (nom, date) et les réglages pour publier.',
+      'not-generated': 'Générez le matin pour pouvoir publier.',
+      stale: 'Régénérez le planning avant de publier.',
+    },
+    error: {
+      network: 'Pas de connexion : réessayez quand le réseau revient.',
+      conflict: 'Le tournoi a été modifié depuis un autre appareil : publication refusée.',
+      unauthorized: 'Le code de gestion de ce tournoi n’est pas sur cet appareil.',
+      'not-found': 'Ce tournoi n’existe plus sur le serveur.',
+      invalid: 'Le serveur a refusé ce planning (données incohérentes).',
+      server: 'Erreur du serveur : réessayez dans un instant.',
+    },
+  },
+  publicPage: {
+    loading: 'Chargement du planning…',
+    notFound: 'Ce tournoi n’existe pas ou n’est plus disponible.',
+    error: 'Impossible de charger le planning. Vérifiez la connexion puis actualisez.',
+    refresh: 'Actualiser',
+    print: 'Imprimer / PDF',
+    updatedAt: (time: string) => `Mis à jour à ${time}`,
+    myTeam: 'Mon équipe',
+    afternoonPending: 'L’après-midi sera affiché après les matchs du matin.',
+  },
+  qr: {
+    title: 'Scannez pour voir le planning',
+    copy: 'Copier le lien',
+    copied: 'Lien copié',
+    share: 'Partager',
+    back: 'Retour au tournoi',
+    alt: (url: string) => `QR code vers ${url}`,
   },
   notFound: {
     title: 'Page introuvable',

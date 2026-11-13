@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { InfoStep } from '../components/InfoStep';
 import { PlanningStep } from '../components/PlanningStep';
+import { PublishPanel } from '../components/PublishPanel';
 import { SettingsStep } from '../components/SettingsStep';
 import { TeamsStep } from '../components/TeamsStep';
 import { isScheduleStale } from '../draft/model';
@@ -36,6 +37,7 @@ export function EditorPage() {
           ← {fr.common.back}
         </Link>
         <h1 className="editor-title">{draft.name.trim() || fr.home.untitled}</h1>
+        <PublishPanel draft={draft} update={update} />
       </header>
 
       <nav className="tabs" aria-label="Étapes">

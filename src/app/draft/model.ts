@@ -1,8 +1,8 @@
 import { suggestSlotMinutes } from '../../domain/format';
 import { LIMITS } from '../../domain/limits';
+import { normalizeName } from '../../domain/names';
 import { drawPools } from '../../domain/pools';
 import { schedulePools } from '../../domain/schedule/generate';
-import { normalizeName } from '../../domain/schemas';
 import { type SetScore, scoreIssue } from '../../domain/scores';
 import {
   isPoolComplete,
@@ -57,7 +57,15 @@ export interface Draft {
   final: Phase | null;
   /** Scores by match id, all phases. */
   results: Record<string, SetScore[]>;
+  /** Set once published: public id, server version and fingerprint of what was sent. */
+  publication: Publication | null;
   updatedAt: string;
+}
+
+export interface Publication {
+  id: string;
+  version: number;
+  key: string;
 }
 
 /** A generated afternoon or final, with the inputs it was built from. */
@@ -97,6 +105,7 @@ export function createDraft(today: string, newId: IdFactory, now: string): Draft
     afternoon: null,
     final: null,
     results: {},
+    publication: null,
     updatedAt: now,
   };
 }

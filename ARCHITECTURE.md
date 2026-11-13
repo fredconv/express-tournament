@@ -45,7 +45,7 @@ Une seule origine (SPA + API) ⇒ pas de CORS, pas de cookie, configuration mini
 | Styles | **CSS natif + variables CSS** | Zéro dépendance ; la feuille d'impression est du CSS de toute façon. | Tailwind (outillage supplémentaire non indispensable). |
 | Validation | **Zod** | Un seul schéma pour formulaires, API et stockage ; types dérivés. | Validation manuelle (duplication, erreurs). |
 | Hors ligne / installation | **vite-plugin-pwa** (Workbox) | Manifest + service worker générés, éprouvé. | Service worker écrit à la main (risque de cache cassé). |
-| QR code | **qrcode** (npm, MIT) | Génération locale, petit, sans service externe. | API QR en ligne (fuite de données, dépendance réseau). |
+| QR code | **qrcode-generator** (npm, MIT, sans dépendance, types inclus) | Génération locale ; matrice de modules dessinée en SVG par React (pas d'`innerHTML`, CSP inchangée). | `qrcode` (plus lourd, types séparés) ; API QR en ligne (fuite de données, dépendance réseau). |
 | PDF | **Impression navigateur + CSS `@media print`** | Aucune dépendance, rendu fidèle, fonctionne sur Android. | jsPDF / pdfmake (poids, mise en page à recoder) → backlog si besoin réel. |
 | API | **Hono** sur Cloudflare Workers | Routeur ~15 Ko, typé, tourne aussi sur Node/Bun/Deno ⇒ porte de sortie. | Express (incompatible Workers) ; fetch handler nu (acceptable, mais middlewares à recoder). |
 | Base de données | **Cloudflare D1** (SQLite) | Gratuit, sans mise en veille, SQL standard, migrable vers SQLite/Postgres. | Supabase (projets gratuits mis en pause après inactivité — incompatible avec un usage ponctuel) ; Firebase (propriétaire, NoSQL) ; PocketBase (nécessite une VM payante). |
@@ -321,5 +321,6 @@ Coût prévu : **0 €** (offres gratuites Workers + D1, sous-domaine `workers.d
 | ADR-8 | 2026-11-12 | Moteur : journée la plus courte d'abord, repos en départage, rejeux à graine fixe ; CA5.3 révisé (0 entorse impossible à durée minimale). | Acceptée |
 | ADR-9 | 2026-11-12 | Dépendances E1 : `zod` (schémas partagés), `tsx` (exécuter `scripts/*.ts` sans build), `@vitest/coverage-v8` (seuil de couverture du domaine). | Acceptée |
 | ADR-10 | 2026-11-12 | Prévisualisations de branche : `build.command` et `assets.directory` dans `wrangler.jsonc`, Workers Builds ignorant la build command des previews. | Acceptée |
+| ADR-11 | 2026-11-12 | E4 : `qrcode-generator` pour le QR (rendu SVG React) ; tests d'API sur SQLite réel via `node:sqlite` (Node 22) derrière un mini-adaptateur D1, sans `@cloudflare/vitest-pool-workers` ; `normalizeName` sorti de `schemas.ts` pour garder Zod hors du bundle client. | Acceptée |
 
 Toute nouvelle dépendance ou changement d'architecture ajoute une ligne ici.

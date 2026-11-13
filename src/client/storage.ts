@@ -63,3 +63,46 @@ export function createDraftStore(store: KeyValueStore | null = defaultStore()) {
 export type DraftStore = ReturnType<typeof createDraftStore>;
 
 export const draftStore = createDraftStore();
+
+const OWNER_CODES_KEY = 'et:owner-codes:v1';
+const MY_TEAM_PREFIX = 'et:my-team:';
+
+/**
+ * Management codes of the tournaments published from this device (SPEC F9), by public
+ * id, and the team each participant follows on a public page (SPEC F6).
+ */
+export function createDeviceStore(store: KeyValueStore | null = defaultStore()) {
+  const memory = new Map<string, string>();
+  const read = (key: string) => (store ? safe(() => store.getItem(key)) : memory.get(key)) ?? null;
+  const write = (key: string, value: string) => {
+    if (store) safe(() => store.setItem(key, value));
+    else memory.set(key, value);
+  };
+  const codes = (): Record<string, string> => {
+    try {
+      const parsed: unknown = JSON.parse(read(OWNER_CODES_KEY) ?? '{}');
+      return parsed && typeof parsed === 'object' ? (parsed as Record<string, string>) : {};
+    } catch {
+      return {};
+    }
+  };
+
+  return {
+    ownerCode: (tournamentId: string): string | null => codes()[tournamentId] ?? null,
+    saveOwnerCode: (tournamentId: string, code: string) =>
+      write(OWNER_CODES_KEY, JSON.stringify({ ...codes(), [tournamentId]: code })),
+    myTeam: (tournamentId: string): string | null => read(MY_TEAM_PREFIX + tournamentId),
+    saveMyTeam: (tournamentId: string, teamId: string | null) =>
+      write(MY_TEAM_PREFIX + tournamentId, teamId ?? ''),
+  };
+}
+
+function safe<T>(action: () => T): T | undefined {
+  try {
+    return action();
+  } catch {
+    return undefined;
+  }
+}
+
+export const deviceStore = createDeviceStore();

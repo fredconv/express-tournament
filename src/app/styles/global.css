@@ -567,3 +567,122 @@ a {
     display: block;
   }
 }
+
+/* Publication */
+.publish {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.publish p {
+  margin: 0;
+}
+
+.publish__links,
+.public-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+a.button {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.public-header {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.public-header p {
+  margin: 0;
+}
+
+/* QR screen: maximum contrast, fills the phone screen */
+.qr-page {
+  min-height: 100vh;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--space);
+  padding: var(--space);
+  background: #fff;
+  color: #000;
+  text-align: center;
+}
+
+.qr-page__title {
+  font-size: 1.4rem;
+}
+
+.qr {
+  width: min(90vw, 70vh, 32rem);
+  height: auto;
+}
+
+.qr-page__url {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #000;
+  overflow-wrap: anywhere;
+}
+
+.qr-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Print / PDF (SPEC F7): A4 portrait, grid layout, no interface controls */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  :root {
+    background: #fff;
+    font-size: 10.5pt;
+  }
+
+  .page {
+    max-width: none;
+    padding: 0;
+  }
+
+  .no-print,
+  .tabs,
+  .back-link,
+  .button,
+  .score-link {
+    display: none !important;
+  }
+
+  .schedule-list,
+  .schedule-list--always {
+    display: none !important;
+  }
+
+  .schedule-grid-wrapper {
+    display: block !important;
+    overflow: visible;
+  }
+
+  .schedule-grid tr,
+  .standings tr,
+  .match-card {
+    break-inside: avoid;
+  }
+
+  .phase {
+    break-before: auto;
+  }
+
+  .standings-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
