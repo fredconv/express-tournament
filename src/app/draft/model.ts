@@ -1,3 +1,4 @@
+import { defaultCourtColor, isCourtColor } from '../../domain/courtColors';
 import { suggestSlotMinutes } from '../../domain/format';
 import { LIMITS } from '../../domain/limits';
 import { normalizeName } from '../../domain/names';
@@ -28,6 +29,11 @@ export interface NamedItem {
   name: string;
 }
 
+export interface Court extends NamedItem {
+  /** `#rrggbb`; missing on drafts created before court colors (palette by position). */
+  color?: string | undefined;
+}
+
 export interface Draft {
   id: string;
   name: string;
@@ -43,7 +49,7 @@ export interface Draft {
   targetEndTime: string;
   /** Fixed break between the end of the morning and the afternoon. */
   lunchMinutes: number;
-  courts: NamedItem[];
+  courts: Court[];
   teams: NamedItem[];
   /** Seed of the morning pool draw. */
   drawSeed: number | null;
@@ -94,8 +100,8 @@ export function createDraft(today: string, newId: IdFactory, now: string): Draft
     targetEndTime: '',
     lunchMinutes: DEFAULT_LUNCH_MINUTES,
     courts: [
-      { id: newId('c'), name: 'Terrain 1' },
-      { id: newId('c'), name: 'Terrain 2' },
+      { id: newId('c'), name: 'Terrain 1', color: defaultCourtColor(0) },
+      { id: newId('c'), name: 'Terrain 2', color: defaultCourtColor(1) },
     ],
     teams: [],
     drawSeed: null,
@@ -167,9 +173,19 @@ export function setCourtCount(draft: Draft, count: number, newId: IdFactory): Dr
   const target = Math.min(LIMITS.maxCourts, Math.max(LIMITS.minCourts, count));
   const courts = draft.courts.slice(0, target);
   while (courts.length < target) {
-    courts.push({ id: newId('c'), name: `Terrain ${courts.length + 1}` });
+    courts.push({
+      id: newId('c'),
+      name: `Terrain ${courts.length + 1}`,
+      color: defaultCourtColor(courts.length),
+    });
   }
   return { ...draft, courts };
+}
+
+/** Only valid `#rrggbb` colors are stored (SPEC F13). */
+export function setCourtColor(draft: Draft, id: string, color: string): Draft {
+  if (!isCourtColor(color)) return draft;
+  return { ...draft, courts: draft.courts.map((c) => (c.id === id ? { ...c, color } : c)) };
 }
 
 export function renameCourt(draft: Draft, id: string, name: string): Draft {

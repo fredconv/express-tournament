@@ -1,62 +1,129 @@
-import type { ReactNode } from 'react';
+import { type CSSProperties, type ReactNode, useState } from 'react';
+import { consecutiveTeams } from '../../domain/consecutive';
+import { courtColor, textColorOn } from '../../domain/courtColors';
 import { outcome } from '../../domain/scores';
 import type { Results } from '../../domain/standings';
 import { formatTime } from '../../domain/time';
 import type { ScheduledMatch } from '../../domain/types';
-import type { NamedItem } from '../draft/model';
+import type { Court, NamedItem } from '../draft/model';
 import { fr } from '../i18n/fr';
 
 interface ScheduleViewProps {
   matches: readonly ScheduledMatch[];
   teams: readonly NamedItem[];
-  courts: readonly NamedItem[];
+  courts: readonly Court[];
   /** Show only this team's matches, or everything when null. */
   teamId: string | null;
   results: Results;
   poolLabel: (poolId: string) => string;
+  /** Team whose matches are highlighted (others dimmed), chosen by a tap. */
+  focusTeamId: string | null;
+  onFocusTeam: (teamId: string | null) => void;
   /** Editor only: score entry under each match. Forces the list layout. */
   renderScore?: (match: ScheduledMatch) => ReactNode;
 }
 
 /**
- * Planning display reused by the editor and, later, the public page (SPEC F6).
- * Mobile: chronological list grouped by start time. Wide screens: time × court grid.
+ * Planning display shared by the editor and the public page (SPEC F6, F13).
+ * Mobile: list grouped by start time. Wide screens and print: time × court grid.
+ * Court color, back-to-back marker and highlight always come with text.
  */
 export function ScheduleView(props: ScheduleViewProps) {
   const { matches, teams, courts, teamId, results, poolLabel, renderScore } = props;
+  const [hoverTeam, setHoverTeam] = useState<string | null>(null);
+  const active = hoverTeam ?? props.focusTeamId;
+
   const teamName = new Map(teams.map((t) => [t.id, t.name]));
-  const courtName = new Map(courts.map((c) => [c.id, c.name]));
+  const name = (id: string) => teamName.get(id) ?? '?';
+  const courtIndex = new Map(courts.map((c, i) => [c.id, i]));
+  const consecutive = consecutiveTeams(matches);
   const visible = teamId
     ? matches.filter((m) => m.teamAId === teamId || m.teamBId === teamId)
     : matches;
   const times = groupByStart(visible);
-  const name = (id: string) => teamName.get(id) ?? '?';
-  const teamsOf = (m: ScheduledMatch) => {
+
+  const courtStyle = (courtId: string): CSSProperties => {
+    const index = courtIndex.get(courtId) ?? 0;
+    const color = courtColor(courts[index] ?? {}, index);
+    return { '--court': color, '--court-text': textColorOn(color) } as CSSProperties;
+  };
+  const stateClass = (m: ScheduledMatch) =>
+    active === null
+      ? ''
+      : m.teamAId === active || m.teamBId === active
+        ? ' is-focused'
+        : ' is-dimmed';
+
+  const team = (id: string, won: boolean) => (
+    <button
+      type="button"
+      className={[
+        'team-button',
+        id === teamId && 'team--highlight',
+        won && 'team--winner',
+        id === active && 'team--active',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-pressed={props.focusTeamId === id}
+      title={fr.planning.focusTeam(name(id))}
+      onClick={() => props.onFocusTeam(props.focusTeamId === id ? null : id)}
+      onMouseEnter={() => setHoverTeam(id)}
+      onMouseLeave={() => setHoverTeam(null)}
+    >
+      {name(id)}
+    </button>
+  );
+
+  const body = (m: ScheduledMatch) => {
     const sets = results[m.id];
     const winner = sets ? outcome(sets).winner : null;
+    const tired = consecutive.get(m.id);
     return (
       <>
-        <Team name={name(m.teamAId)} highlight={m.teamAId === teamId} won={winner === 'a'} />
-        <span className="match-card__vs">{sets ? formatScore(sets) : fr.planning.vs}</span>
-        <Team name={name(m.teamBId)} highlight={m.teamBId === teamId} won={winner === 'b'} />
+        <span className="match-card__teams">
+          {team(m.teamAId, winner === 'a')}
+          <span className="match-card__vs">{sets ? formatScore(sets) : fr.planning.vs}</span>
+          {team(m.teamBId, winner === 'b')}
+        </span>
+        {tired && (
+          <span className="consecutive">
+            <span aria-hidden="true">↻ </span>
+            {fr.planning.consecutive(tired.map(name).join(', '))}
+          </span>
+        )}
       </>
     );
   };
+
+  const courtBadge = (courtId: string) => (
+    <span className="court-badge" style={courtStyle(courtId)}>
+      {courts[courtIndex.get(courtId) ?? 0]?.name}
+    </span>
+  );
 
   return (
     <>
       <ol className={`schedule-list${renderScore ? ' schedule-list--always' : ''}`}>
         {times.map(([start, timeMatches]) => (
           <li key={start} className="schedule-list__slot">
-            <h4 className="schedule-list__time">{formatTime(start)}</h4>
+            <h4 className="slot-head">
+              <span className="slot-head__time">{formatTime(start)}</span>
+              <span className="slot-head__count">
+                {fr.planning.simultaneous(timeMatches.length)}
+              </span>
+            </h4>
             <ul className="schedule-list__matches">
               {timeMatches.map((m) => (
-                <li key={m.id} className="match-card">
+                <li
+                  key={m.id}
+                  className={`match-card${stateClass(m)}`}
+                  style={courtStyle(m.courtId)}
+                >
                   <span className="match-card__meta">
-                    {courtName.get(m.courtId)} · {fr.planning.match(m.number)} ·{' '}
-                    {poolLabel(m.poolId)}
+                    {courtBadge(m.courtId)} {fr.planning.match(m.number)} · {poolLabel(m.poolId)}
                   </span>
-                  <span className="match-card__teams">{teamsOf(m)}</span>
+                  {body(m)}
                   {renderScore?.(m)}
                 </li>
               ))}
@@ -73,7 +140,7 @@ export function ScheduleView(props: ScheduleViewProps) {
                 <th scope="col">{fr.planning.time}</th>
                 {courts.map((c) => (
                   <th key={c.id} scope="col">
-                    {c.name}
+                    {courtBadge(c.id)}
                   </th>
                 ))}
               </tr>
@@ -81,20 +148,24 @@ export function ScheduleView(props: ScheduleViewProps) {
             <tbody>
               {times.map(([start, timeMatches]) => (
                 <tr key={start}>
-                  <th scope="row">{formatTime(start)}</th>
+                  <th scope="row" className="schedule-grid__time">
+                    {formatTime(start)}
+                  </th>
                   {courts.map((c) => {
                     const m = timeMatches.find((x) => x.courtId === c.id);
-                    return (
-                      <td key={c.id}>
-                        {m && (
-                          <>
-                            <span className="schedule-grid__number">
-                              #{m.number} · {poolLabel(m.poolId)}
-                            </span>{' '}
-                            {teamsOf(m)}
-                          </>
-                        )}
+                    return m ? (
+                      <td
+                        key={c.id}
+                        className={`schedule-grid__cell${stateClass(m)}`}
+                        style={courtStyle(c.id)}
+                      >
+                        <span className="schedule-grid__number">
+                          #{m.number} · {poolLabel(m.poolId)}
+                        </span>
+                        {body(m)}
                       </td>
+                    ) : (
+                      <td key={c.id} />
                     );
                   })}
                 </tr>
@@ -109,13 +180,6 @@ export function ScheduleView(props: ScheduleViewProps) {
 
 export function formatScore(sets: readonly { a: number; b: number }[]): string {
   return sets.map((s) => `${s.a}-${s.b}`).join(', ');
-}
-
-function Team({ name, highlight, won }: { name: string; highlight: boolean; won: boolean }) {
-  const className = [highlight && 'team--highlight', won && 'team--winner']
-    .filter(Boolean)
-    .join(' ');
-  return <span className={className || undefined}>{name}</span>;
 }
 
 function groupByStart(matches: readonly ScheduledMatch[]): [number, ScheduledMatch[]][] {

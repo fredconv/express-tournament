@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
+import { courtColor, textColorOn } from '../../domain/courtColors';
 import { outcome } from '../../domain/scores';
 import { poolStandings } from '../../domain/standings';
 import { formatTime } from '../../domain/time';
@@ -14,6 +15,8 @@ import { StandingsTable } from './StandingsTable';
 export interface PhaseProps {
   draft: Draft;
   teamId: string | null;
+  focusTeamId: string | null;
+  onFocusTeam: (teamId: string | null) => void;
   /** Editor only: score entry under each match. */
   renderScore?: (m: ScheduledMatch) => ReactNode;
 }
@@ -21,6 +24,8 @@ export interface PhaseProps {
 export function PhaseSection({
   draft,
   teamId,
+  focusTeamId,
+  onFocusTeam,
   renderScore,
   title,
   pools,
@@ -48,7 +53,7 @@ export function PhaseSection({
               title={poolLabel(pool.id)}
               rows={poolStandings(pool, schedule.matches, draft.results)}
               teamName={teamNameOf(draft)}
-              teamId={teamId}
+              teamId={teamId ?? focusTeamId}
             />
           ))}
         </div>
@@ -60,6 +65,8 @@ export function PhaseSection({
         teamId={teamId}
         results={draft.results}
         poolLabel={poolLabel}
+        focusTeamId={focusTeamId}
+        onFocusTeam={onFocusTeam}
         {...(renderScore ? { renderScore } : {})}
       />
     </section>
@@ -109,6 +116,44 @@ export function TeamFilter({
         ))}
       </select>
     </label>
+  );
+}
+
+/** Court colors, back-to-back marker and how to highlight a team (SPEC F13). */
+export function Legend({
+  draft,
+  focusTeamId,
+  onFocusTeam,
+}: Pick<PhaseProps, 'draft' | 'focusTeamId' | 'onFocusTeam'>) {
+  return (
+    <div className="legend">
+      <p className="legend__title">{fr.planning.legend}</p>
+      <ul className="legend__items">
+        {draft.courts.map((court, i) => {
+          const color = courtColor(court, i);
+          const style = { '--court': color, '--court-text': textColorOn(color) } as CSSProperties;
+          return (
+            <li key={court.id}>
+              <span className="court-badge" style={style}>
+                {court.name}
+              </span>
+            </li>
+          );
+        })}
+        <li>
+          <span className="consecutive consecutive--sample">↻ {fr.planning.consecutive('…')}</span>{' '}
+          <span className="small">{fr.planning.legendConsecutive}</span>
+        </li>
+      </ul>
+      {focusTeamId ? (
+        <button type="button" className="focus-chip no-print" onClick={() => onFocusTeam(null)}>
+          {fr.planning.focused(teamNameOf(draft)(focusTeamId))} <span aria-hidden="true">✕</span>
+          <span className="visually-hidden">{fr.planning.clearFocus}</span>
+        </button>
+      ) : (
+        <p className="muted small no-print">{fr.planning.legendFocus}</p>
+      )}
+    </div>
   );
 }
 

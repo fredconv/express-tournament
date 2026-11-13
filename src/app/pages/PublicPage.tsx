@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { getTournament, type PublishedTournament } from '../../client/api';
 import { deviceStore } from '../../client/storage';
-import { Champion, DaySummary, PhaseSection, TeamFilter } from '../components/DayView';
+import { Champion, DaySummary, Legend, PhaseSection, TeamFilter } from '../components/DayView';
 import { fromDoc } from '../draft/publish';
 import { fr } from '../i18n/fr';
 
@@ -16,6 +16,7 @@ export function PublicPage() {
   const { id = '' } = useParams();
   const [state, setState] = useState<State>({ kind: 'loading' });
   const [teamId, setTeamId] = useState<string | null>(() => deviceStore.myTeam(id) || null);
+  const [focusTeam, setFocusTeam] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const result = await getTournament(id);
@@ -52,7 +53,8 @@ export function PublicPage() {
     day: 'numeric',
     month: 'long',
   });
-  const phaseProps = { draft, teamId: selected };
+  const focusTeamId = draft.teams.some((t) => t.id === focusTeam) ? focusTeam : null;
+  const phaseProps = { draft, teamId: selected, focusTeamId, onFocusTeam: setFocusTeam };
 
   return (
     <main className="page page--public">
@@ -75,6 +77,7 @@ export function PublicPage() {
       </header>
 
       <TeamFilter draft={draft} teamId={selected} onChange={chooseTeam} />
+      <Legend draft={draft} focusTeamId={focusTeamId} onFocusTeam={setFocusTeam} />
       <Champion draft={draft} />
       {draft.final && (
         <PhaseSection

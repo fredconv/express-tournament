@@ -637,6 +637,177 @@ a.button {
   gap: 0.5rem;
 }
 
+/* Planning readability (SPEC F13): court accents, time slots, back-to-back, highlight */
+:root {
+  --color-consecutive: #8a4b00;
+  --color-consecutive-bg: #fff1df;
+  --color-consecutive-border: #e8890c;
+}
+
+.court-row {
+  display: grid;
+  grid-template-columns: var(--tap) 1fr;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.court-row__color {
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0.15rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.court-badge {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--court, var(--color-muted));
+  color: var(--court-text, #fff);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.match-card {
+  border-left: 0.3rem solid var(--court, var(--color-border));
+  transition: opacity 0.15s;
+}
+
+.slot-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 0 0 0.4rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 2px solid var(--color-text);
+}
+
+.slot-head__time {
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.slot-head__count {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+.team-button {
+  border: 0;
+  border-radius: 0.2rem;
+  padding: 0.1rem 0.15rem;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.team-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+}
+
+.team--active {
+  background: var(--color-highlight);
+  text-decoration: underline;
+}
+
+.is-dimmed {
+  opacity: 0.4;
+}
+
+.match-card.is-focused {
+  box-shadow: 0 0 0 2px var(--color-text);
+}
+
+.consecutive {
+  justify-self: start;
+  padding: 0.05rem 0.4rem;
+  border-left: 3px solid var(--color-consecutive-border);
+  border-radius: 0.2rem;
+  background: var(--color-consecutive-bg);
+  color: var(--color-consecutive);
+  font-size: 0.78rem;
+  font-weight: 600;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.schedule-grid__time {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.schedule-grid tbody tr:nth-child(even) {
+  background: #f4f6f9;
+}
+
+.schedule-grid__cell {
+  border-left: 0.3rem solid var(--court, var(--color-border));
+}
+
+.schedule-grid__cell .match-card__teams {
+  display: flex;
+}
+
+.schedule-grid__cell .consecutive {
+  display: inline-block;
+  margin-top: 0.2rem;
+}
+
+.legend {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.legend p {
+  margin: 0;
+}
+
+.legend__title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.legend__items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.focus-chip {
+  justify-self: start;
+  min-height: var(--tap);
+  padding: 0.25rem 0.75rem;
+  border: 2px solid var(--color-text);
+  border-radius: 999px;
+  background: var(--color-highlight);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 /* Print / PDF (SPEC F7): A4 portrait, grid layout, no interface controls */
 @media print {
   @page {
@@ -684,5 +855,23 @@ a.button {
 
   .standings-list {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .is-dimmed {
+    opacity: 1;
+  }
+
+  .team--active {
+    background: none;
+    text-decoration: none;
+  }
+
+  .schedule-grid tbody tr:nth-child(even) {
+    background: none;
+  }
+
+  .slot-head,
+  .schedule-grid__time {
+    font-weight: 800;
   }
 }
