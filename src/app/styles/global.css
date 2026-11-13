@@ -551,7 +551,8 @@ a {
 }
 
 @media (min-width: 48rem) {
-  .page--editor {
+  .page--editor,
+  .page--public {
     max-width: 64rem;
   }
 
@@ -753,7 +754,7 @@ a.button {
   background: #f4f6f9;
 }
 
-.schedule-grid__cell {
+.schedule-grid td.schedule-grid__cell {
   border-left: 0.3rem solid var(--court, var(--color-border));
 }
 
