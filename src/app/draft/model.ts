@@ -298,6 +298,20 @@ export function isScheduleStale(draft: Draft): boolean {
   return blockingIssues(draft).length > 0 || draft.scheduleKey !== scheduleKeyOf(draft);
 }
 
+/** Every generated match of the day, in order: morning, afternoon, final. */
+export function dayMatches(draft: Draft): ScheduledMatch[] {
+  return [
+    ...(draft.schedule?.matches ?? []),
+    ...(draft.afternoon?.schedule.matches ?? []),
+    ...(draft.final?.schedule.matches ?? []),
+  ];
+}
+
+/** Matches shown when the schedule is filtered on one team (SPEC F6). */
+export function teamMatchCount(draft: Draft, teamId: string): number {
+  return dayMatches(draft).filter((m) => m.teamAId === teamId || m.teamBId === teamId).length;
+}
+
 export function hasResults(draft: Draft): boolean {
   return Object.keys(draft.results).length > 0;
 }

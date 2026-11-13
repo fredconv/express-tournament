@@ -702,36 +702,6 @@ a.button {
   color: var(--color-muted);
 }
 
-.team-button {
-  border: 0;
-  border-radius: 0.2rem;
-  padding: 0.1rem 0.15rem;
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-weight: 600;
-  text-align: left;
-  overflow-wrap: anywhere;
-  cursor: pointer;
-}
-
-.team-button:focus-visible {
-  outline: 2px solid var(--color-primary);
-}
-
-.team--active {
-  background: var(--color-highlight);
-  text-decoration: underline;
-}
-
-.is-dimmed {
-  opacity: 0.4;
-}
-
-.match-card.is-focused {
-  box-shadow: 0 0 0 2px var(--color-text);
-}
-
 .consecutive {
   justify-self: start;
   padding: 0.05rem 0.4rem;
@@ -767,6 +737,29 @@ a.button {
   margin-top: 0.2rem;
 }
 
+.team-filter {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.team-filter--active .input {
+  border: 2px solid var(--color-primary);
+  font-weight: 700;
+}
+
+.team-filter__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.4rem 0.4rem 0.4rem 0.75rem;
+  border-radius: var(--radius);
+  background: var(--color-info-bg);
+  font-weight: 600;
+}
+
 .legend {
   display: grid;
   gap: 0.35rem;
@@ -794,19 +787,6 @@ a.button {
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.focus-chip {
-  justify-self: start;
-  min-height: var(--tap);
-  padding: 0.25rem 0.75rem;
-  border: 2px solid var(--color-text);
-  border-radius: 999px;
-  background: var(--color-highlight);
-  color: var(--color-text);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
 }
 
 /* Print / PDF (SPEC F7): A4 portrait, grid layout, no interface controls */
@@ -856,15 +836,6 @@ a.button {
 
   .standings-list {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .is-dimmed {
-    opacity: 1;
-  }
-
-  .team--active {
-    background: none;
-    text-decoration: none;
   }
 
   .schedule-grid tbody tr:nth-child(even) {

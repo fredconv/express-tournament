@@ -16,7 +16,6 @@ export function PublicPage() {
   const { id = '' } = useParams();
   const [state, setState] = useState<State>({ kind: 'loading' });
   const [teamId, setTeamId] = useState<string | null>(() => deviceStore.myTeam(id) || null);
-  const [focusTeam, setFocusTeam] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const result = await getTournament(id);
@@ -53,8 +52,7 @@ export function PublicPage() {
     day: 'numeric',
     month: 'long',
   });
-  const focusTeamId = draft.teams.some((t) => t.id === focusTeam) ? focusTeam : null;
-  const phaseProps = { draft, teamId: selected, focusTeamId, onFocusTeam: setFocusTeam };
+  const phaseProps = { draft, teamId: selected };
 
   return (
     <main className="page page--public">
@@ -77,7 +75,7 @@ export function PublicPage() {
       </header>
 
       <TeamFilter draft={draft} teamId={selected} onChange={chooseTeam} />
-      <Legend draft={draft} focusTeamId={focusTeamId} onFocusTeam={setFocusTeam} />
+      <Legend draft={draft} />
       <Champion draft={draft} />
       {draft.final && (
         <PhaseSection

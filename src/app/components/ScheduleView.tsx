@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { consecutiveTeams } from '../../domain/consecutive';
 import { courtColor, textColorOn } from '../../domain/courtColors';
 import { outcome } from '../../domain/scores';
@@ -16,9 +16,6 @@ interface ScheduleViewProps {
   teamId: string | null;
   results: Results;
   poolLabel: (poolId: string) => string;
-  /** Team whose matches are highlighted (others dimmed), chosen by a tap. */
-  focusTeamId: string | null;
-  onFocusTeam: (teamId: string | null) => void;
   /** Editor only: score entry under each match. Forces the list layout. */
   renderScore?: (match: ScheduledMatch) => ReactNode;
 }
@@ -30,9 +27,6 @@ interface ScheduleViewProps {
  */
 export function ScheduleView(props: ScheduleViewProps) {
   const { matches, teams, courts, teamId, results, poolLabel, renderScore } = props;
-  const [hoverTeam, setHoverTeam] = useState<string | null>(null);
-  const active = hoverTeam ?? props.focusTeamId;
-
   const teamName = new Map(teams.map((t) => [t.id, t.name]));
   const name = (id: string) => teamName.get(id) ?? '?';
   const courtIndex = new Map(courts.map((c, i) => [c.id, i]));
@@ -47,33 +41,12 @@ export function ScheduleView(props: ScheduleViewProps) {
     const color = courtColor(courts[index] ?? {}, index);
     return { '--court': color, '--court-text': textColorOn(color) } as CSSProperties;
   };
-  const stateClass = (m: ScheduledMatch) =>
-    active === null
-      ? ''
-      : m.teamAId === active || m.teamBId === active
-        ? ' is-focused'
-        : ' is-dimmed';
-
-  const team = (id: string, won: boolean) => (
-    <button
-      type="button"
-      className={[
-        'team-button',
-        id === teamId && 'team--highlight',
-        won && 'team--winner',
-        id === active && 'team--active',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      aria-pressed={props.focusTeamId === id}
-      title={fr.planning.focusTeam(name(id))}
-      onClick={() => props.onFocusTeam(props.focusTeamId === id ? null : id)}
-      onMouseEnter={() => setHoverTeam(id)}
-      onMouseLeave={() => setHoverTeam(null)}
-    >
-      {name(id)}
-    </button>
-  );
+  const team = (id: string, won: boolean) => {
+    const className = [id === teamId && 'team--highlight', won && 'team--winner']
+      .filter(Boolean)
+      .join(' ');
+    return <span className={className || undefined}>{name(id)}</span>;
+  };
 
   const body = (m: ScheduledMatch) => {
     const sets = results[m.id];
@@ -109,17 +82,16 @@ export function ScheduleView(props: ScheduleViewProps) {
           <li key={start} className="schedule-list__slot">
             <h4 className="slot-head">
               <span className="slot-head__time">{formatTime(start)}</span>
-              <span className="slot-head__count">
-                {fr.planning.simultaneous(timeMatches.length)}
-              </span>
+              {/* Filtered: other matches of the slot are hidden, so no misleading count. */}
+              {!teamId && (
+                <span className="slot-head__count">
+                  {fr.planning.simultaneous(timeMatches.length)}
+                </span>
+              )}
             </h4>
             <ul className="schedule-list__matches">
               {timeMatches.map((m) => (
-                <li
-                  key={m.id}
-                  className={`match-card${stateClass(m)}`}
-                  style={courtStyle(m.courtId)}
-                >
+                <li key={m.id} className="match-card" style={courtStyle(m.courtId)}>
                   <span className="match-card__meta">
                     {courtBadge(m.courtId)} {fr.planning.match(m.number)} · {poolLabel(m.poolId)}
                   </span>
@@ -154,11 +126,7 @@ export function ScheduleView(props: ScheduleViewProps) {
                   {courts.map((c) => {
                     const m = timeMatches.find((x) => x.courtId === c.id);
                     return m ? (
-                      <td
-                        key={c.id}
-                        className={`schedule-grid__cell${stateClass(m)}`}
-                        style={courtStyle(c.id)}
-                      >
+                      <td key={c.id} className="schedule-grid__cell" style={courtStyle(c.id)}>
                         <span className="schedule-grid__number">
                           #{m.number} · {poolLabel(m.poolId)}
                         </span>

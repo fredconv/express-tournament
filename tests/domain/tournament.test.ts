@@ -5,6 +5,7 @@ import {
   canGenerateFinal,
   createDraft,
   type Draft,
+  dayMatches,
   exceedsTargetEnd,
   generate,
   generateAfternoon,
@@ -13,6 +14,7 @@ import {
   isScheduleStale,
   matchMinutesOf,
   setResult,
+  teamMatchCount,
 } from '../../src/app/draft/model';
 import { drawPools, poolSizes } from '../../src/domain/pools';
 import { seededRandom } from '../../src/domain/schedule/random';
@@ -231,6 +233,16 @@ describe('full tournament day (SPEC F10–F12)', () => {
       { a: 21, b: 19 },
     ]);
     expect(day.results[final.id]).toBeDefined();
+
+    // The team filter counts every match of the team over the day (SPEC F6).
+    const champion = final.teamAId;
+    const expected = [morning, afternoon.schedule, final && day.final?.schedule].flatMap((phase) =>
+      (phase?.matches ?? []).filter((m) => m.teamAId === champion || m.teamBId === champion),
+    ).length;
+    expect(teamMatchCount(day, champion)).toBe(expected);
+    expect(dayMatches(day)).toHaveLength(
+      morning.matches.length + afternoon.schedule.matches.length + 1,
+    );
 
     // Changing a morning score marks the afternoon stale (no silent recalculation).
     const first = morning.matches[0] as ScheduledMatch;

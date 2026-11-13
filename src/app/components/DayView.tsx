@@ -5,7 +5,7 @@ import { poolStandings } from '../../domain/standings';
 import { formatTime } from '../../domain/time';
 import type { PoolInput, ScheduledMatch, ScheduleResult } from '../../domain/types';
 import { describeFormat } from '../draft/labels';
-import { type Draft, exceedsTargetEnd } from '../draft/model';
+import { type Draft, exceedsTargetEnd, teamMatchCount } from '../draft/model';
 import { fr } from '../i18n/fr';
 import { ScheduleView } from './ScheduleView';
 import { StandingsTable } from './StandingsTable';
@@ -15,8 +15,6 @@ import { StandingsTable } from './StandingsTable';
 export interface PhaseProps {
   draft: Draft;
   teamId: string | null;
-  focusTeamId: string | null;
-  onFocusTeam: (teamId: string | null) => void;
   /** Editor only: score entry under each match. */
   renderScore?: (m: ScheduledMatch) => ReactNode;
 }
@@ -24,8 +22,6 @@ export interface PhaseProps {
 export function PhaseSection({
   draft,
   teamId,
-  focusTeamId,
-  onFocusTeam,
   renderScore,
   title,
   pools,
@@ -53,10 +49,13 @@ export function PhaseSection({
               title={poolLabel(pool.id)}
               rows={poolStandings(pool, schedule.matches, draft.results)}
               teamName={teamNameOf(draft)}
-              teamId={teamId ?? focusTeamId}
+              teamId={teamId}
             />
           ))}
         </div>
+      )}
+      {teamId && !schedule.matches.some((m) => m.teamAId === teamId || m.teamBId === teamId) && (
+        <p className="muted small">{fr.planning.noMatchForTeam}</p>
       )}
       <ScheduleView
         matches={schedule.matches}
@@ -65,8 +64,6 @@ export function PhaseSection({
         teamId={teamId}
         results={draft.results}
         poolLabel={poolLabel}
-        focusTeamId={focusTeamId}
-        onFocusTeam={onFocusTeam}
         {...(renderScore ? { renderScore } : {})}
       />
     </section>
@@ -91,6 +88,10 @@ export function DaySummary({ draft }: { draft: Draft }) {
   );
 }
 
+/**
+ * The single team selector (SPEC F6): only the selected team's matches are shown,
+ * the others are hidden (not deleted). Shared by the editor and the public page.
+ */
 export function TeamFilter({
   draft,
   teamId,
@@ -101,30 +102,39 @@ export function TeamFilter({
   onChange: (teamId: string | null) => void;
 }) {
   return (
-    <label className="field no-print">
-      <span className="field__label">{fr.planning.filter}</span>
-      <select
-        className="input"
-        value={teamId ?? ''}
-        onChange={(e) => onChange(e.target.value || null)}
-      >
-        <option value="">{fr.planning.allTeams}</option>
-        {draft.teams.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.name}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div className={`team-filter${teamId ? ' team-filter--active' : ''}`}>
+      <label className="field no-print">
+        <span className="field__label">{fr.planning.filter}</span>
+        <select
+          className="input"
+          value={teamId ?? ''}
+          onChange={(e) => onChange(e.target.value || null)}
+        >
+          <option value="">{fr.planning.allTeams}</option>
+          {draft.teams.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      {teamId && (
+        <p className="team-filter__status" role="status">
+          <span>
+            <span aria-hidden="true">⏷ </span>
+            {fr.planning.filtered(teamNameOf(draft)(teamId), teamMatchCount(draft, teamId))}
+          </span>
+          <button type="button" className="button" onClick={() => onChange(null)}>
+            {fr.planning.showAll}
+          </button>
+        </p>
+      )}
+    </div>
   );
 }
 
-/** Court colors, back-to-back marker and how to highlight a team (SPEC F13). */
-export function Legend({
-  draft,
-  focusTeamId,
-  onFocusTeam,
-}: Pick<PhaseProps, 'draft' | 'focusTeamId' | 'onFocusTeam'>) {
+/** Court colors and back-to-back marker (SPEC F13). */
+export function Legend({ draft }: { draft: Draft }) {
   return (
     <div className="legend">
       <p className="legend__title">{fr.planning.legend}</p>
@@ -145,14 +155,6 @@ export function Legend({
           <span className="small">{fr.planning.legendConsecutive}</span>
         </li>
       </ul>
-      {focusTeamId ? (
-        <button type="button" className="focus-chip no-print" onClick={() => onFocusTeam(null)}>
-          {fr.planning.focused(teamNameOf(draft)(focusTeamId))} <span aria-hidden="true">✕</span>
-          <span className="visually-hidden">{fr.planning.clearFocus}</span>
-        </button>
-      ) : (
-        <p className="muted small no-print">{fr.planning.legendFocus}</p>
-      )}
     </div>
   );
 }

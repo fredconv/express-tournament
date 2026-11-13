@@ -25,7 +25,6 @@ import type { StepProps } from './stepProps';
 export function PlanningStep({ draft, update }: StepProps) {
   const [teamId, setTeamId] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
-  const [focusTeam, setFocusTeam] = useState<string | null>(null);
   const blocking = blockingIssues(draft);
   const stale = isScheduleStale(draft);
   const selectedTeam = draft.teams.some((t) => t.id === teamId) ? teamId : null;
@@ -60,14 +59,7 @@ export function PlanningStep({ draft, update }: StepProps) {
       </button>
     );
 
-  const focusTeamId = draft.teams.some((t) => t.id === focusTeam) ? focusTeam : null;
-  const phaseProps = {
-    draft,
-    teamId: selectedTeam,
-    focusTeamId,
-    onFocusTeam: setFocusTeam,
-    renderScore,
-  };
+  const phaseProps = { draft, teamId: selectedTeam, renderScore };
   const morning = draft.schedule;
   const afternoonStale = isAfternoonStale(draft);
 
@@ -99,7 +91,7 @@ export function PlanningStep({ draft, update }: StepProps) {
         <div className={stale ? 'planning planning--stale' : 'planning'}>
           <DaySummary draft={draft} />
           <TeamFilter draft={draft} teamId={selectedTeam} onChange={setTeamId} />
-          <Legend draft={draft} focusTeamId={focusTeamId} onFocusTeam={setFocusTeam} />
+          <Legend draft={draft} />
           <PhaseSection
             {...phaseProps}
             title={fr.planning.morning}

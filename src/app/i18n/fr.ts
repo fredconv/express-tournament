@@ -109,13 +109,13 @@ export const fr = {
     winner: (name: string) => `Vainqueur du tournoi : ${name}`,
     simultaneous: (n: number) => (n > 1 ? `${n} matchs en même temps` : '1 match'),
     consecutive: (names: string) => `Enchaîne : ${names}`,
-    focusTeam: (name: string) => `Afficher les matchs de ${name}`,
-    focused: (name: string) => `Matchs de ${name} en évidence`,
-    clearFocus: 'Retirer la mise en évidence',
+    filtered: (name: string, n: number) =>
+      `Planning filtré : ${name} · ${n} match${n > 1 ? 's' : ''}`,
+    showAll: 'Toutes les équipes',
+    noMatchForTeam: 'Aucun match de cette équipe dans cette phase.',
     legend: 'Légende',
     legendConsecutive:
       'équipe qui joue deux créneaux de suite, sans repos (information, pas une erreur)',
-    legendFocus: 'Touchez ou survolez une équipe pour mettre tous ses matchs en évidence.',
   },
   score: {
     enter: 'Saisir le score',
