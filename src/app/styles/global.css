@@ -748,7 +748,8 @@ a.button {
 
 @media (min-width: 48rem) {
   .team-filter .field {
-    grid-template-columns: auto minmax(0, 22rem);
+    grid-template-columns: max-content minmax(0, 22rem);
+    justify-content: start;
     align-items: center;
     gap: 0.75rem;
   }
