@@ -26,7 +26,14 @@ export function PhaseSection({
   title,
   pools,
   schedule,
-}: PhaseProps & { title: string; pools: readonly PoolInput[]; schedule: ScheduleResult }) {
+  beforeSchedule,
+}: PhaseProps & {
+  title: string;
+  pools: readonly PoolInput[];
+  schedule: ScheduleResult;
+  /** Controls acting on the schedule (team filter), placed right above the first slot. */
+  beforeSchedule?: ReactNode;
+}) {
   const poolLabel = poolLabelOf(draft);
   return (
     <section className="phase">
@@ -54,6 +61,7 @@ export function PhaseSection({
           ))}
         </div>
       )}
+      {beforeSchedule}
       {teamId && !schedule.matches.some((m) => m.teamAId === teamId || m.teamBId === teamId) && (
         <p className="muted small">{fr.planning.noMatchForTeam}</p>
       )}

@@ -53,6 +53,8 @@ export function PublicPage() {
     month: 'long',
   });
   const phaseProps = { draft, teamId: selected };
+  // One selector, above the first schedule shown (latest phase first).
+  const filter = <TeamFilter draft={draft} teamId={selected} onChange={chooseTeam} />;
 
   return (
     <main className="page page--public">
@@ -74,12 +76,12 @@ export function PublicPage() {
         </div>
       </header>
 
-      <TeamFilter draft={draft} teamId={selected} onChange={chooseTeam} />
       <Legend draft={draft} />
       <Champion draft={draft} />
       {draft.final && (
         <PhaseSection
           {...phaseProps}
+          beforeSchedule={filter}
           title={fr.planning.final}
           pools={[]}
           schedule={draft.final.schedule}
@@ -88,6 +90,7 @@ export function PublicPage() {
       {draft.afternoon && (
         <PhaseSection
           {...phaseProps}
+          beforeSchedule={draft.final ? null : filter}
           title={fr.planning.afternoon}
           pools={draft.afternoon.pools}
           schedule={draft.afternoon.schedule}
@@ -96,6 +99,7 @@ export function PublicPage() {
       {draft.schedule && (
         <PhaseSection
           {...phaseProps}
+          beforeSchedule={draft.final || draft.afternoon ? null : filter}
           title={fr.planning.morning}
           pools={draft.pools}
           schedule={draft.schedule}
