@@ -63,6 +63,7 @@ export function fromDoc(doc: TournamentDoc): Draft {
     slotCount: Math.max(0, ...phase.matches.map((m) => m.slot + 1)),
     endMinute: Math.max(0, ...phase.matches.map((m) => m.endMinute)),
     warnings: [],
+    backToBackMinimal: false,
   });
   const later = (phase: PhaseDoc | null) =>
     phase ? { pools: phase.pools, schedule: schedule(phase), key: '' } : null;

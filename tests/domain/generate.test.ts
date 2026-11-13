@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { LIMITS } from '../../src/domain/limits';
+import { drawPools } from '../../src/domain/pools';
 import { generateSchedule, schedulePools } from '../../src/domain/schedule/generate';
 import { validateSchedule } from '../../src/domain/schedule/validate';
 import type { ScheduleInput, ScheduleResult } from '../../src/domain/types';
-import { makeInput, schedule, shapeOf, slotsByTeam } from './helpers';
+import { ids, makeInput, schedule, shapeOf, slotsByTeam } from './helpers';
 
 const TEAM_COUNTS = Array.from({ length: 31 }, (_, i) => i + 2);
 const COURT_COUNTS = Array.from({ length: LIMITS.maxCourts }, (_, i) => i + 1);
@@ -26,8 +27,9 @@ describe('generateSchedule — properties over every size (CA4.1, CA4.3, CA5.1)'
 
           const perSlot = new Map<number, number>();
           for (const m of result.matches) perSlot.set(m.slot, (perSlot.get(m.slot) ?? 0) + 1);
-          expect(perSlot.size, `${label}: no empty slot`).toBe(result.slotCount);
           expect(Math.max(...perSlot.values()), label).toBeLessThanOrEqual(courts);
+          // SPEC F5: never three slots in a row, whatever the rest option.
+          expect(longestRun(result), `${label}: longest run`).toBeLessThanOrEqual(2);
         }
       }
     }, 60_000);
@@ -35,32 +37,83 @@ describe('generateSchedule — properties over every size (CA4.1, CA4.3, CA5.1)'
 });
 
 describe('generateSchedule — slot count', () => {
-  it('CA4.2: without rest and with enough courts, N−1 slots (even) or N (odd)', () => {
+  it('CA4.2: without rest, every court is used unless that would make a team play three in a row', () => {
     for (const teams of TEAM_COUNTS) {
-      const courts = Math.floor(teams / 2);
-      if (courts > LIMITS.maxCourts) continue;
+      const courts = Math.min(LIMITS.maxCourts, Math.floor(teams / 2));
       const result = schedule(teams, courts, { avoidBackToBack: false });
-      expect(result.slotCount, `${teams} teams`).toBe(teams % 2 === 0 ? teams - 1 : teams);
+      const perTeam = teams - 1;
+      // With runs of at most two, a team needs one rest per two matches.
+      const noTripleBound = Math.max(
+        perTeam + Math.floor((perTeam - 1) / 2),
+        Math.ceil((teams * perTeam) / 2 / courts),
+      );
+      expect(longestRun(result), `${teams} teams`).toBeLessThanOrEqual(2);
+      // Greedy, not exact: measured within 3 slots of that bound (single pool, rest off).
+      expect(result.slotCount, `${teams} teams`).toBeLessThanOrEqual(noTripleBound + 3);
     }
   });
 
-  it('reaches the minimum number of slots on reference sizes, rest on', () => {
-    const sizes = [
-      [4, 2],
-      [6, 2],
-      [8, 2],
-      [8, 3],
-      [10, 3],
-      [12, 4],
+  it('pool days stay within one slot of the minimum on realistic sizes, rest on', () => {
+    for (const [teams, courts] of [
+      [13, 2],
+      [13, 3],
+      [14, 3],
+      [15, 2],
+      [15, 3],
       [16, 4],
       [20, 4],
       [32, 6],
-    ] as const;
-    for (const [teams, courts] of sizes) {
-      const usable = Math.min(courts, Math.floor(teams / 2));
-      const lowerBound = Math.ceil((teams * (teams - 1)) / 2 / usable);
-      expect(schedule(teams, courts).slotCount, `${teams}/${courts}`).toBe(lowerBound);
+    ] as const) {
+      const pools = drawPools(ids('t', teams), 1);
+      const result = schedulePools({ ...poolInput(courts), pools });
+      const matchCount = result.matches.length;
+      const lowerBound = Math.ceil(matchCount / Math.min(courts, Math.floor(teams / 2)));
+      expect(result.slotCount, `${teams}/${courts}`).toBeLessThanOrEqual(lowerBound + 1);
     }
+  });
+});
+
+describe('three in a row (SPEC F5, ADR-12)', () => {
+  it('13 teams, pools 5-4-4, 3 courts: 22 matches in 8 slots and never three in a row', () => {
+    for (let seed = 1; seed <= 50; seed++) {
+      const pools = drawPools(ids('t', 13), seed);
+      expect(pools.map((p) => p.teamIds.length)).toEqual([5, 4, 4]);
+      const result = schedulePools({ ...poolInput(3), pools });
+      expect(result.matches).toHaveLength(22);
+      expect(result.slotCount, `seed ${seed}`).toBe(8);
+      expect(longestRun(result), `seed ${seed}`).toBeLessThanOrEqual(2);
+    }
+  });
+
+  it('every pool layout from 2 to 32 teams on 1 to 6 courts avoids three in a row', () => {
+    for (const teams of TEAM_COUNTS) {
+      for (const courts of COURT_COUNTS) {
+        const pools = drawPools(ids('t', teams), teams * 7 + courts);
+        for (const avoidBackToBack of [true, false]) {
+          const result = schedulePools({ ...poolInput(courts), pools, avoidBackToBack });
+          expect(longestRun(result), `${teams}/${courts}`).toBeLessThanOrEqual(2);
+        }
+      }
+    }
+  }, 60_000);
+
+  it('8 teams, pools 4-4, 3 courts: impossible in 4 slots (proved), so one more slot is used', () => {
+    const pools = drawPools(ids('t', 8), 1);
+    const pairings = pools.flatMap((p) =>
+      p.teamIds.flatMap((a, i) => p.teamIds.slice(i + 1).map((b) => [a, b] as const)),
+    );
+    expect(existsWithoutTriple(pairings, 4, 3)).toBe(false);
+    expect(existsWithoutTriple(pairings, 5, 3)).toBe(true);
+    const result = schedulePools({ ...poolInput(3), pools });
+    expect(result.slotCount).toBe(5);
+    expect(longestRun(result)).toBeLessThanOrEqual(2);
+  });
+
+  it('reports back-to-backs as proven minimal only when the lower bound is reached', () => {
+    const fifteen = schedulePools({ ...poolInput(3), pools: drawPools(ids('t', 15), 1) });
+    expect(fifteen.backToBackMinimal).toBe(true);
+    const sixteen = schedulePools({ ...poolInput(5), pools: drawPools(ids('t', 16), 1) });
+    expect(sixteen.backToBackMinimal).toBe(false);
   });
 });
 
@@ -196,3 +249,67 @@ describe('schedulePools — several pools on shared courts (CA4.6)', () => {
     }
   });
 });
+
+function poolInput(courts: number) {
+  return {
+    courtIds: ids('c', courts),
+    startMinute: 9 * 60,
+    slotMinutes: 20,
+    transitionMinutes: 5,
+    avoidBackToBack: true,
+  };
+}
+
+function longestRun(result: ScheduleResult): number {
+  let longest = 0;
+  for (const slots of slotsByTeam(result).values()) {
+    let run = 0;
+    slots.forEach((slot, i) => {
+      run = i > 0 && slot === (slots[i - 1] as number) + 1 ? run + 1 : 1;
+      longest = Math.max(longest, run);
+    });
+  }
+  return longest;
+}
+
+/**
+ * Exhaustive search (small cases only): can these matches fit in `slotCount` slots of
+ * `courts` courts with no team playing three slots in a row?
+ */
+function existsWithoutTriple(
+  pairings: readonly (readonly [string, string])[],
+  slotCount: number,
+  courts: number,
+): boolean {
+  const slotsOf = new Map<string, Set<number>>();
+  const used = new Array<number>(slotCount).fill(0);
+  const playing = Array.from({ length: slotCount }, () => new Set<string>());
+  const tripleAt = (team: string, slot: number) => {
+    const s = slotsOf.get(team) ?? new Set<number>();
+    const has = (x: number) => x === slot || s.has(x);
+    return [slot - 2, slot - 1, slot].some(
+      (start) => has(start) && has(start + 1) && has(start + 2),
+    );
+  };
+  const place = (index: number): boolean => {
+    const pairing = pairings[index];
+    if (!pairing) return true;
+    const [a, b] = pairing;
+    for (let slot = 0; slot < slotCount; slot++) {
+      if ((used[slot] as number) >= courts) continue;
+      const busy = playing[slot] as Set<string>;
+      if (busy.has(a) || busy.has(b) || tripleAt(a, slot) || tripleAt(b, slot)) continue;
+      used[slot] = (used[slot] as number) + 1;
+      busy.add(a);
+      busy.add(b);
+      for (const t of [a, b]) slotsOf.set(t, (slotsOf.get(t) ?? new Set<number>()).add(slot));
+      if (place(index + 1)) return true;
+      used[slot] = (used[slot] as number) - 1;
+      busy.delete(a);
+      busy.delete(b);
+      for (const t of [a, b]) slotsOf.get(t)?.delete(slot);
+    }
+    return false;
+  };
+  return place(0);
+}

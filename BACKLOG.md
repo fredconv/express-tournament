@@ -44,7 +44,7 @@ Priorité indicative : **P1** = première itération après V1, **P2** = ensuite
 | A23 | Gérer depuis un autre appareil, suppression, purge automatique à 90 jours | P1 | Reporté du MVP (D4, D6). |
 | A24 | Tests E2E Playwright et audit Lighthouse | P2 | Reporté du MVP. |
 | A25 | Estimation de l'heure de fin de journée dès la configuration | P2 | |
-| A19 | Optimiseur de repos plus fort (recherche locale / échanges de matchs) : 8 équipes / 3 terrains garde une série de 4 matchs pour une équipe | P2 | ADR-8, cas de référence. |
+| A19 | ~~Optimiseur de repos plus fort~~ : séries de 3+ supprimées par ADR-12 (2026-11-13). Reste possible : recherche locale pour réduire encore les doubles ou la durée sur les grands tournois. | P3 | ADR-12. |
 
 ## Dette technique / qualité
 

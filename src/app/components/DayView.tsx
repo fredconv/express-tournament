@@ -181,7 +181,7 @@ function Warnings({ draft, schedule }: { draft: Draft; schedule: ScheduleResult 
     0,
   );
   const messages: string[] = [];
-  if (backToBack > 0) messages.push(fr.warnings.backToBack(backToBack));
+  if (backToBack > 0) messages.push(fr.warnings.backToBack(backToBack, schedule.backToBackMinimal));
   const lateEnd = exceedsTargetEnd(draft, schedule);
   if (lateEnd !== null) messages.push(fr.warnings.exceedsTarget(formatTime(lateEnd)));
   if (schedule.warnings.some((w) => w.kind === 'past-midnight')) {
