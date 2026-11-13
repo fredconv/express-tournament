@@ -68,4 +68,9 @@ export interface ScheduleResult {
   /** End of the last match (start of the tournament if there is no match). */
   endMinute: number;
   warnings: ScheduleWarning[];
+  /**
+   * True when the number of back-to-backs is proven minimal for this day length;
+   * false means "best schedule found", not "unavoidable".
+   */
+  backToBackMinimal: boolean;
 }

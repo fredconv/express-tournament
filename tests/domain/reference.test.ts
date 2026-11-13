@@ -24,10 +24,10 @@ describe('reference schedules (rest on)', () => {
   it('6 teams / 2 courts', () => {
     expect(metrics(schedule(6, 2))).toMatchInlineSnapshot(`
       {
-        "backToBack": 13,
-        "longestIdle": 2,
-        "longestStreak": 3,
-        "maxPlayedGap": 2,
+        "backToBack": 10,
+        "longestIdle": 1,
+        "longestStreak": 2,
+        "maxPlayedGap": 1,
         "slots": 8,
       }
     `);
@@ -36,11 +36,11 @@ describe('reference schedules (rest on)', () => {
   it('8 teams / 3 courts', () => {
     expect(metrics(schedule(8, 3))).toMatchInlineSnapshot(`
       {
-        "backToBack": 31,
+        "backToBack": 15,
         "longestIdle": 2,
-        "longestStreak": 4,
+        "longestStreak": 2,
         "maxPlayedGap": 1,
-        "slots": 10,
+        "slots": 12,
       }
     `);
   });

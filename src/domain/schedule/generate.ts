@@ -34,9 +34,10 @@ export function schedulePools(input: PoolScheduleInput): ScheduleResult {
   assertValidInput(input);
 
   const pairings = poolPairings(input.pools);
-  const { assignments, slotCount, backToBack } = input.avoidBackToBack
-    ? bestRestedAssignment(pairings, input.courtIds.length)
-    : assignSlots(pairings, input.courtIds.length, false);
+  const courtCount = input.courtIds.length;
+  const { assignments, slotCount, backToBack, minimal } = input.avoidBackToBack
+    ? bestRestedAssignment(pairings, courtCount)
+    : withoutLongRuns(pairings, courtCount);
 
   const step = input.slotMinutes + input.transitionMinutes;
   const prefix = input.idPrefix ?? 'm';
@@ -66,38 +67,75 @@ export function schedulePools(input: PoolScheduleInput): ScheduleResult {
     warnings.push({ kind: 'past-midnight', endMinute });
   }
 
-  return { matches, slotCount, endMinute, warnings };
+  return { matches, slotCount, endMinute, warnings, backToBackMinimal: minimal };
+}
+
+type Rested = AssignResult & {
+  /** Back-to-backs proven minimal for this day length (lower bound reached). */
+  minimal: boolean;
+};
+
+/**
+ * Rest off: Berger order fills every court. A team must still never play three slots
+ * in a row (SPEC F5): if the fill does, the capped variant is used (a court may wait).
+ */
+function withoutLongRuns(pairings: readonly Pairing[], courtCount: number): Rested {
+  const fill = assignSlots(pairings, courtCount, false);
+  const result =
+    fill.overRuns > 0 ? assignSlots(pairings, courtCount, false, undefined, true) : fill;
+  return { ...result, minimal: false };
 }
 
 /**
  * The greedy cannot see the end of the day, so with rest enabled it is replayed with
- * seeded tie-break orders and the best result kept: fewest slots, then shortest
- * consecutive run, then fewest back-to-back appearances. Stops early once the
- * theoretical minimum of back-to-backs is reached. Deterministic: same input, same
- * schedule.
+ * seeded tie-break orders and the best result kept (SPEC F5, priorities in order):
+ *   1. no team plays three slots in a row: when filling every court would cause it,
+ *      the capped variant lets a court wait instead (always possible, the day may be
+ *      one slot longer), so this one is guaranteed by construction;
+ *   2. fewest back-to-back appearances;
+ *   3. fairness: fewest back-to-backs for the most affected team;
+ *   4. shortest day.
+ * Stops early once back-to-backs reach their lower bound for the slot layout, which is
+ * then reported as proven minimal; otherwise the result is only the best found.
+ * Deterministic: same input, same schedule.
  */
-function bestRestedAssignment(pairings: readonly Pairing[], courtCount: number): AssignResult {
-  let best = assignSlots(pairings, courtCount, true);
+function bestRestedAssignment(pairings: readonly Pairing[], courtCount: number): Rested {
+  const tryOrder = (tieBreak?: ReadonlyMap<Pairing, number>) => {
+    const fill = assignSlots(pairings, courtCount, true, tieBreak);
+    if (fill.overRuns === 0) return fill;
+    const capped = assignSlots(pairings, courtCount, true, tieBreak, true);
+    return compareRest(capped, fill) < 0 ? capped : fill;
+  };
+  let best = tryOrder();
   const attempts = Math.min(
     REST_ATTEMPTS,
-    Math.floor(WORK_BUDGET / Math.max(1, best.slotCount * pairings.length)),
+    Math.floor(WORK_BUDGET / Math.max(1, 2 * best.slotCount * pairings.length)),
   );
   const random = seededRandom(SEED);
   for (let attempt = 0; attempt < attempts && !isRestOptimal(best, pairings); attempt++) {
     const order = shuffled(pairings, random);
-    const tieBreak = new Map(order.map((pairing, rank) => [pairing, rank]));
-    const candidate = assignSlots(pairings, courtCount, true, tieBreak);
+    const candidate = tryOrder(new Map(order.map((pairing, rank) => [pairing, rank])));
     if (compareRest(candidate, best) < 0) best = candidate;
   }
-  return best;
+  return { ...best, minimal: isRestOptimal(best, pairings) };
 }
 
 function compareRest(x: AssignResult, y: AssignResult): number {
   return (
-    x.slotCount - y.slotCount ||
+    x.overRuns - y.overRuns ||
     x.longestStreak - y.longestStreak ||
-    countBackToBack(x) - countBackToBack(y)
+    countBackToBack(x) - countBackToBack(y) ||
+    worstTeamBackToBack(x) - worstTeamBackToBack(y) ||
+    x.slotCount - y.slotCount
   );
+}
+
+function worstTeamBackToBack(result: AssignResult): number {
+  const perTeam = new Map<string, number>();
+  for (const entry of result.backToBack) {
+    for (const team of entry.teamIds) perTeam.set(team, (perTeam.get(team) ?? 0) + 1);
+  }
+  return Math.max(0, ...perTeam.values());
 }
 
 function countBackToBack(result: AssignResult): number {
@@ -128,7 +166,11 @@ function isRestOptimal(result: AssignResult, pairings: readonly Pairing[]): bool
     const rests = result.slotCount - matches;
     streakBound = Math.max(streakBound, Math.ceil(matches / (rests + 1)));
   }
-  return countBackToBack(result) <= lowerBound && result.longestStreak <= streakBound;
+  return (
+    result.overRuns === 0 &&
+    countBackToBack(result) <= lowerBound &&
+    result.longestStreak <= streakBound
+  );
 }
 
 function assertValidInput(input: PoolScheduleInput): void {

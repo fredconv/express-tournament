@@ -153,8 +153,12 @@ export const fr = {
     'court-name-missing': 'chaque terrain doit avoir un nom',
   },
   warnings: {
-    backToBack: (teams: number) =>
-      `${teams} enchaînement${teams > 1 ? 's' : ''} de deux matchs d’affilée (inévitable avec ce nombre de terrains).`,
+    backToBack: (teams: number, minimal: boolean) =>
+      `${teams} enchaînement${teams > 1 ? 's' : ''} de deux matchs d’affilée ${
+        minimal
+          ? '(minimum possible pour cette durée de journée)'
+          : '(meilleur planning trouvé, pas forcément le minimum)'
+      }. Jamais trois matchs d’affilée.`,
     exceedsTarget: (end: string) => `Fin à ${end}, après l’heure de fin souhaitée.`,
     pastMidnight: 'Le tournoi se termine après minuit.',
   },

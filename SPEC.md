@@ -93,7 +93,7 @@ Les critères sont vérifiables par test automatisé (TA) ou recette manuelle (R
 
 **Critères d'acceptation**
 - [x] CA4.1 (TA) Pour une poule de N de 2 à 32 équipes et C de 1 à 16 terrains : nombre de matchs = N(N−1)/2 et chaque paire apparaît une seule fois.
-- [x] CA4.2 (TA) Pour N pair, C ≥ N/2 et repos désactivé : nombre de créneaux = N−1 (N impair : N).
+- [x] CA4.2 (TA) Repos désactivé : chaque créneau utilise autant de terrains que possible sans créer trois matchs d'affilée ; durée à 3 créneaux au plus de la borne inférieure sans triple. _Révisé le 2026-11-13 (ADR-12) : « N−1 créneaux » imposait des séries de N−1 matchs._
 - [x] CA4.3 (TA) Heures de début/fin cohérentes : début(créneau k) = début + k × (durée + battement).
 - [x] CA4.4 (TA) Génération de 32 équipes / 16 terrains en moins de 200 ms sur un smartphone milieu de gamme (mesuré < 50 ms en Node).
 - [x] CA4.5 (TA) Si l'heure de fin cible est dépassée, une alerte indique l'heure de fin réelle.
@@ -102,13 +102,18 @@ Les critères sont vérifiables par test automatisé (TA) ou recette manuelle (R
 ### F5 — Repos des équipes et absence de conflits
 _Moteur existant (E1) conservé tel quel ; aucune optimisation supplémentaire en V1._
 - **Aucun conflit** (invariant absolu) : une équipe ne joue jamais deux matchs dans le même créneau ; un terrain n'accueille jamais deux matchs dans le même créneau.
-- **Repos** (règle souple) : la journée la plus courte passe d'abord (tous les terrains sont occupés tant qu'il reste des matchs jouables). À durée égale, si l'option est activée, le moteur minimise les matchs consécutifs et répartit ceux qui sont inévitables entre les équipes plutôt que d'allonger la série d'une même équipe. Chaque entorse est signalée.
-- **Équité** : à chaque créneau, priorité aux équipes qui attendent depuis le plus longtemps.
+- **Priorités du placement** (_révisées le 2026-11-13 à la demande de l'utilisateur, ADR-12_), dans cet ordre :
+  1. contraintes absolues : aucun chevauchement équipe ou terrain, tous les matchs programmés ;
+  2. **jamais trois matchs d'affilée** pour une équipe, que l'option repos soit activée ou non : si remplir tous les terrains l'imposerait, un terrain attend (la journée peut s'allonger d'un créneau) ; garanti par construction ;
+  3. (option repos activée) le moins possible de doubles enchaînements ;
+  4. équité : le moins d'enchaînements possible pour l'équipe la plus touchée ;
+  5. durée de journée la plus courte.
+- Les doubles enchaînements restants sont signalés avec leur statut : « minimum possible pour cette durée » seulement si la borne inférieure est atteinte, sinon « meilleur planning trouvé » ; jamais « inévitable » sans preuve.
 
 **Critères d'acceptation**
 - [x] CA5.1 (TA, test de propriété sur toutes les combinaisons N × C) Aucun conflit équipe ni terrain.
 - [x] CA5.2 (TA) Avec repos activé, toute entorse au repos figure dans les alertes avec les équipes concernées ; sans alerte, aucune équipe ne joue deux créneaux consécutifs.
-- [x] CA5.3 (TA) Le planning utilise le nombre minimal de créneaux sur les cas de référence ; à durée minimale, aucune équipe n'enchaîne plus de 2 matchs sur 8 équipes / 2 terrains, et les entorses au repos sont figées dans des cas de référence (non-régression). _Révisé le 2026-11-12 : « 0 entorse » est mathématiquement impossible en 14 créneaux pour 8 équipes / 2 terrains (chaque équipe devrait jouer un créneau sur deux, ce qui sépare les équipes en deux groupes qui ne se rencontrent jamais)._
+- [x] CA5.3 (TA) Aucune équipe ne joue trois créneaux d'affilée, pour toutes les tailles (2–32 équipes, 1–6 terrains, poules ou poule unique, repos activé ou non). Cas de l'utilisateur : 13 équipes, poules 5-4-4, 3 terrains → 22 matchs en 8 créneaux, zéro triple. Cas prouvé impossible en durée minimale (recherche exhaustive) : 8 équipes, poules 4-4, 3 terrains en 4 créneaux → 5 créneaux sans triple. _Révisé le 2026-11-13 (ADR-12)._
 - [x] CA5.4 (TA) L'écart maximal de nombre de matchs joués entre deux équipes, à la fin de n'importe quel créneau, est documenté et ne régresse pas (test de non-régression sur cas de référence).
 
 ### F10 — Poules du matin

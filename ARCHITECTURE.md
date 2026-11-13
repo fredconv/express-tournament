@@ -165,15 +165,16 @@ function generateSchedule(input: ScheduleInput): {
 ### Algorithme (simple, déterministe, O(M × C × S))
 
 1. **Paires** : méthode du cercle (tables de Berger) → liste des N(N−1)/2 matchs ordonnés par « tour » (N impair : équipe fictive « exempt »). Cet ordre garantit déjà une bonne alternance.
-2. **Placement glouton par créneau, journée la plus courte d'abord** : chaque créneau prend autant de matchs que de terrains, parmi ceux dont les deux équipes sont libres. Repos désactivé : ordre de Berger (optimal : N−1 ou N créneaux quand il y a assez de terrains). Repos activé, tri par :
+2. **Placement glouton par créneau** : chaque créneau prend autant de matchs que de terrains, parmi ceux dont les deux équipes sont libres. Repos désactivé : ordre de Berger (optimal : N−1 ou N créneaux quand il y a assez de terrains). Repos activé, tri par :
    (a) coût de fatigue = Σ (longueur de la série prolongée)² des équipes qui viennent de jouer, (b) nombre de matchs restants des deux équipes décroissant (goulots d'étranglement), (c) attente cumulée décroissante, (d) ordre de départage.
-3. **Rejeux déterministes** (repos activé) : le glouton ne voit pas la fin de journée ; il est rejoué jusqu'à 60 fois avec des ordres de départage pseudo-aléatoires **à graine fixe** (même entrée → même planning), dans un budget de calcul borné. On garde le meilleur (créneaux, puis plus longue série, puis nombre d'enchaînements) et on s'arrête dès que les bornes théoriques sont atteintes.
-4. Calcul des horaires : `start = startMinute + slot × (slotMinutes + transitionMinutes)`.
-5. `validateSchedule()` vérifie les invariants (paires uniques, complétude, aucun conflit équipe/terrain, horaires, numérotation) ; il est appelé par les tests **et** par le serveur (via `tournamentDocSchema`) avant tout enregistrement.
+3. **Plafond de séries** (ADR-12) : une rencontre qui donnerait à une équipe un 3ᵉ créneau consécutif n'est jamais choisie dans la variante plafonnée ; le terrain attend. Cette variante est utilisée dès que le remplissage complet crée un triple : zéro triple est donc garanti par construction, au prix d'au plus quelques créneaux.
+4. **Rejeux déterministes** (repos activé) : le glouton ne voit pas la fin de journée ; il est rejoué jusqu'à 60 fois avec des ordres de départage pseudo-aléatoires **à graine fixe** (même entrée → même planning), dans un budget de calcul borné. On garde le meilleur selon : triples (0), plus longue série, doubles enchaînements, enchaînements de l'équipe la plus touchée, puis nombre de créneaux. Arrêt anticipé quand les doubles atteignent leur borne inférieure pour la disposition des créneaux : le résultat est alors marqué `backToBackMinimal` (optimal démontré pour cette durée) ; sinon il n'est que le meilleur trouvé.
+5. Calcul des horaires : `start = startMinute + slot × (slotMinutes + transitionMinutes)`.
+6. `validateSchedule()` vérifie les invariants (paires uniques, complétude, aucun conflit équipe/terrain, horaires, numérotation) ; il est appelé par les tests **et** par le serveur (via `tournamentDocSchema`) avant tout enregistrement.
 
 Le moteur est testé sans navigateur : tests unitaires + tests de propriétés exhaustifs (N 2..32 × C 1..16, repos activé et désactivé) + cas de référence figés (`tests/domain/reference.test.ts`) + test d'architecture (pureté de `src/domain`). Si la qualité du glouton est insuffisante sur un cas réel, on améliore `assignSlots.ts` seul, le contrat ne change pas.
 
-Mesures (Node, 2026-11-12) : 32 équipes / 16 terrains < 1 ms ; budget de calcul plafonné (rejeux ≤ 400 000 opérations) : toutes les tailles < 200 ms (test de performance hors couverture). Limite connue : 8 équipes / 3 terrains garde une série de 4 matchs pour une équipe (BACKLOG A19).
+Mesures (Node, 2026-11-12) : 32 équipes / 16 terrains < 1 ms ; budget de calcul plafonné (rejeux ≤ 400 000 opérations) : toutes les tailles < 200 ms (test de performance hors couverture). Coût mesuré du plafond (2026-11-13, 186 configurations de poules 2–32 équipes × 1–6 terrains) : 39 avaient un triple, aucune n'en a plus ; 37 configurations prennent un créneau de plus (surtout « beaucoup de terrains pour peu d'équipes ») ; 13, 14, 15 équipes sur 2 ou 3 terrains : durée inchangée.
 
 ## 6. Modèle de données
 
@@ -322,5 +323,6 @@ Coût prévu : **0 €** (offres gratuites Workers + D1, sous-domaine `workers.d
 | ADR-9 | 2026-11-12 | Dépendances E1 : `zod` (schémas partagés), `tsx` (exécuter `scripts/*.ts` sans build), `@vitest/coverage-v8` (seuil de couverture du domaine). | Acceptée |
 | ADR-10 | 2026-11-12 | Prévisualisations de branche : `build.command` et `assets.directory` dans `wrangler.jsonc`, Workers Builds ignorant la build command des previews. | Acceptée |
 | ADR-11 | 2026-11-12 | E4 : `qrcode-generator` pour le QR (rendu SVG React) ; tests d'API sur SQLite réel via `node:sqlite` (Node 22) derrière un mini-adaptateur D1, sans `@cloudflare/vitest-pool-workers` ; `normalizeName` sorti de `schemas.ts` pour garder Zod hors du bundle client. | Acceptée |
+| ADR-12 | 2026-11-13 | Moteur : jamais trois matchs d'affilée (variante plafonnée, un terrain peut attendre), puis moins de doubles, puis équité, puis durée ; remplace « journée la plus courte d'abord » (ADR-8) à la demande de l'utilisateur. Optimalité des doubles signalée seulement si la borne est atteinte. | Acceptée |
 
 Toute nouvelle dépendance ou changement d'architecture ajoute une ligne ici.

@@ -14,7 +14,14 @@ export interface AssignResult {
   backToBack: { slot: number; teamIds: string[] }[];
   /** Longest run of consecutive slots played by any team. */
   longestStreak: number;
+  /** Matches played as the 3rd (or later) consecutive slot of a team, summed over teams. */
+  overRuns: number;
+  /** Teams that played three or more consecutive slots. */
+  longRunTeams: string[];
 }
+
+/** A team never plays more consecutive slots than this when `capRuns` is set. */
+export const MAX_RUN = 2;
 
 interface TeamState {
   lastSlot: number;
@@ -38,12 +45,16 @@ const NEVER_PLAYED = -2;
  *   4. `tieBreak` rank (pairing order by default; callers may pass seeded variants).
  * Without rest, Berger order alone is used, which yields the optimal N−1 (even) or
  * N (odd) slots when there are enough courts for a full round.
+ *
+ * With `capRuns`, a pairing that would give a team a third consecutive slot is never
+ * picked: the court waits instead (the day may get longer, a triple never happens).
  */
 export function assignSlots(
   pairings: readonly Pairing[],
   courtCount: number,
   avoidBackToBack: boolean,
   tieBreak?: ReadonlyMap<Pairing, number>,
+  capRuns = false,
 ): AssignResult {
   const teams = new Map<string, TeamState>();
   for (const p of pairings) {
@@ -59,13 +70,19 @@ export function assignSlots(
   const assignments: SlotAssignment[] = [];
   const backToBack: AssignResult['backToBack'] = [];
   let longestStreak = 0;
+  let overRuns = 0;
+  const longRunTeams = new Set<string>();
   let slotCount = 0;
 
   for (let slot = 0; remaining.length > 0; slot++) {
     const ranked = avoidBackToBack
       ? rankForRest(remaining, slot, team, tieBreak)
       : [...remaining].sort((x, y) => x.round - y.round || x.order - y.order);
-    const picked = pickFreeTeams(ranked, courtCount);
+    const exhausted = (teamId: string) => {
+      const state = team(teamId);
+      return state.lastSlot === slot - 1 && state.streak >= MAX_RUN;
+    };
+    const picked = pickFreeTeams(ranked, courtCount, capRuns ? exhausted : () => false);
 
     const tired: string[] = [];
     picked.forEach((pairing, courtIndex) => {
@@ -79,6 +96,10 @@ export function assignSlots(
         state.lastSlot = slot;
         state.remaining--;
         longestStreak = Math.max(longestStreak, state.streak);
+        if (state.streak > MAX_RUN) {
+          overRuns++;
+          longRunTeams.add(teamId);
+        }
       }
     });
     if (avoidBackToBack && tired.length > 0) {
@@ -87,7 +108,14 @@ export function assignSlots(
     slotCount = slot + 1;
   }
 
-  return { assignments, slotCount, backToBack, longestStreak };
+  return {
+    assignments,
+    slotCount,
+    backToBack,
+    longestStreak,
+    overRuns,
+    longRunTeams: [...longRunTeams],
+  };
 }
 
 /** Decorate-sort-undecorate: keys are computed once per pairing per slot. */
@@ -115,13 +143,21 @@ function rankForRest(
   return keyed.map((k) => k.pairing);
 }
 
-/** Takes pairings in rank order, skipping any whose team already plays in this slot. */
-function pickFreeTeams(ranked: readonly Pairing[], courtCount: number): Pairing[] {
+/**
+ * Takes pairings in rank order, skipping any whose team already plays in this slot or
+ * is `exhausted` (would start a third consecutive slot).
+ */
+function pickFreeTeams(
+  ranked: readonly Pairing[],
+  courtCount: number,
+  exhausted: (teamId: string) => boolean,
+): Pairing[] {
   const busy = new Set<string>();
   const picked: Pairing[] = [];
   for (const pairing of ranked) {
     if (picked.length === courtCount) break;
     if (busy.has(pairing.teamAId) || busy.has(pairing.teamBId)) continue;
+    if (exhausted(pairing.teamAId) || exhausted(pairing.teamBId)) continue;
     picked.push(pairing);
     busy.add(pairing.teamAId);
     busy.add(pairing.teamBId);
