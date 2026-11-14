@@ -4,7 +4,7 @@ import { suggestSlotMinutes } from './format';
 import { LIMITS } from './limits';
 import { normalizeName } from './names';
 import { validateSchedule } from './schedule/validate';
-import { MAX_SET_POINTS, scoreIssue } from './scores';
+import { isForfeit, MAX_SET_POINTS, scoreIssue, setsToWin } from './scores';
 import { isValidTime, MINUTES_PER_DAY, parseTime } from './time';
 import type { PoolInput, ScheduledMatch } from './types';
 
@@ -89,11 +89,16 @@ const docShape = z.object({
   final: phaseSchema.nullable(),
   results: z.record(
     idSchema,
-    z
-      .array(setScoreSchema)
-      .min(1)
-      .max(LIMITS.maxSets + 1),
+    z.union([
+      z
+        .array(setScoreSchema)
+        .min(1)
+        .max(LIMITS.maxSets + 1),
+      z.object({ forfeit: z.enum(['a', 'b']), sets: int(1, LIMITS.maxSets) }),
+    ]),
   ),
+  /** Teams that left during the day (SPEC F11); absent on older documents. */
+  withdrawn: z.array(idSchema).max(LIMITS.maxTeams).optional(),
 });
 
 export const tournamentDocSchema = docShape.superRefine((doc, ctx) => {
@@ -126,6 +131,9 @@ function docIssues(doc: z.infer<typeof docShape>): DocIssue[] {
   // Field-level errors are reported by the shape; timings cannot be checked without them.
   if (!isValidTime(doc.startTime)) return issues;
   const slotMinutes = suggestSlotMinutes(doc.matchFormat);
+  const withdrawn = new Set(doc.withdrawn ?? []);
+  if ([...withdrawn].some((id) => !teamIds.includes(id)))
+    issue('unknown withdrawn team', ['withdrawn']);
   const phases: { key: 'morning' | 'afternoon' | 'final'; phase: PhaseDoc }[] = [];
   let startMinute = parseTime(doc.startTime);
   let firstNumber = 1;
@@ -136,7 +144,9 @@ function docIssues(doc: z.infer<typeof docShape>): DocIssue[] {
     if (isFinal && (phase.pools.length !== 1 || phase.pools[0]?.teamIds.length !== 2)) {
       issue('final must be one match', [key]);
     }
-    if (!isFinal && !coversAllTeams(phase.pools, teamIds)) {
+    // Withdrawn teams may be left out of the afternoon, never out of the morning.
+    const left = key === 'afternoon' ? withdrawn : new Set<string>();
+    if (!isFinal && !coversTeams(phase.pools, teamIds, left)) {
       issue('pools must contain every team once', [key, 'pools']);
     }
     const errors = validateSchedule({
@@ -157,20 +167,31 @@ function docIssues(doc: z.infer<typeof docShape>): DocIssue[] {
 
   const finalIds = new Set(doc.final?.matches.map((m) => m.id) ?? []);
   const matchIds = new Set(phases.flatMap(({ phase }) => phase.matches.map((m) => m.id)));
-  for (const [matchId, sets] of Object.entries(doc.results)) {
+  for (const [matchId, result] of Object.entries(doc.results)) {
     if (!matchIds.has(matchId)) issue('score for unknown match', ['results', matchId]);
-    else if (scoreIssue(sets, doc.matchFormat, finalIds.has(matchId)) !== null) {
+    else if (isForfeit(result)) {
+      if (result.sets !== setsToWin(doc.matchFormat))
+        issue('invalid forfeit', ['results', matchId]);
+    } else if (scoreIssue(result, doc.matchFormat, finalIds.has(matchId)) !== null) {
       issue('invalid score', ['results', matchId]);
     }
   }
   return issues;
 }
 
-function coversAllTeams(pools: readonly PoolInput[], teamIds: readonly string[]): boolean {
+/** Every team once, except teams in `left` which may be absent. */
+function coversTeams(
+  pools: readonly PoolInput[],
+  teamIds: readonly string[],
+  left: ReadonlySet<string>,
+): boolean {
   const inPools = pools.flatMap((p) => p.teamIds);
-  return inPools.length === teamIds.length && new Set(inPools).size === teamIds.length
-    ? teamIds.every((id) => inPools.includes(id))
-    : false;
+  const known = new Set(teamIds);
+  return (
+    new Set(inPools).size === inPools.length &&
+    inPools.every((id) => known.has(id)) &&
+    teamIds.every((id) => inPools.includes(id) || left.has(id))
+  );
 }
 
 function endOf(matches: readonly ScheduledMatch[]): number {

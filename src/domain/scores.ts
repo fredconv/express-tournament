@@ -28,7 +28,46 @@ export function allowsDraw(format: MatchFormat): boolean {
   return !bestOf && format.setCount % 2 === 0;
 }
 
-export function outcome(sets: readonly SetScore[]): Outcome {
+/**
+ * Forfeit (SPEC F11): the team on `forfeit` side loses without playing. The winner is
+ * credited the sets needed to win the format, no points either way, so point
+ * differences are unchanged. Stored instead of set scores.
+ */
+export interface Forfeit {
+  forfeit: 'a' | 'b';
+  /** Sets credited to the winner. */
+  sets: number;
+}
+
+export type MatchResult = SetScore[] | Forfeit;
+
+export function isForfeit(result: readonly SetScore[] | Forfeit): result is Forfeit {
+  return !Array.isArray(result);
+}
+
+/** Sets a team needs to win the match: all of them, or a majority with winning sets. */
+export function setsToWin(format: MatchFormat): number {
+  return format.kind === 'points' && format.mode === 'best-of'
+    ? Math.ceil(format.setCount / 2)
+    : format.setCount;
+}
+
+export function forfeitBy(side: 'a' | 'b', format: MatchFormat): Forfeit {
+  return { forfeit: side, sets: setsToWin(format) };
+}
+
+export function outcome(result: readonly SetScore[] | Forfeit): Outcome {
+  if (isForfeit(result)) {
+    const winner = result.forfeit === 'a' ? 'b' : 'a';
+    return {
+      setsA: winner === 'a' ? result.sets : 0,
+      setsB: winner === 'b' ? result.sets : 0,
+      pointsA: 0,
+      pointsB: 0,
+      winner,
+    };
+  }
+  const sets = result;
   let setsA = 0;
   let setsB = 0;
   let pointsA = 0;

@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { allowsDraw, type SetScore, scoreIssue } from '../../domain/scores';
+import {
+  allowsDraw,
+  isForfeit,
+  type MatchResult,
+  type SetScore,
+  scoreIssue,
+} from '../../domain/scores';
 import type { MatchFormat } from '../../domain/types';
 import { fr } from '../i18n/fr';
 
@@ -7,10 +13,12 @@ interface ScoreFormProps {
   format: MatchFormat;
   /** The final needs a winner: a deciding set row is offered when draws are possible. */
   isFinal: boolean;
-  initial: readonly SetScore[] | undefined;
+  initial: MatchResult | undefined;
   teamA: string;
   teamB: string;
   onSave: (sets: SetScore[]) => void;
+  /** Forfeit by side A or B: the other team wins without playing. */
+  onForfeit: (side: 'a' | 'b') => void;
   onClear: () => void;
   onCancel: () => void;
 }
@@ -23,7 +31,7 @@ export function ScoreForm(props: ScoreFormProps) {
   const rowCount = format.setCount + (isFinal && allowsDraw(format) ? 1 : 0);
   const [rows, setRows] = useState<Row[]>(() =>
     Array.from({ length: rowCount }, (_, i) => {
-      const set = initial?.[i];
+      const set = initial && !isForfeit(initial) ? initial[i] : undefined;
       return set ? { a: String(set.a), b: String(set.b) } : { a: '', b: '' };
     }),
   );
@@ -60,6 +68,15 @@ export function ScoreForm(props: ScoreFormProps) {
         })}
       </div>
       {error && <p className="field__error">{error}</p>}
+      <div className="score-form__forfeit">
+        <span className="small muted">{fr.score.forfeitHelp}</span>
+        <button type="button" className="button" onClick={() => props.onForfeit('a')}>
+          {fr.score.forfeitOf(teamA)}
+        </button>
+        <button type="button" className="button" onClick={() => props.onForfeit('b')}>
+          {fr.score.forfeitOf(teamB)}
+        </button>
+      </div>
       <div className="score-form__actions">
         <button type="button" className="button button--primary" onClick={save}>
           {fr.score.save}

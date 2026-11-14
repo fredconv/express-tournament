@@ -4,7 +4,13 @@ import { LIMITS } from '../../domain/limits';
 import { normalizeName } from '../../domain/names';
 import { drawPools, lockIssues, type PoolLocks, poolSizes } from '../../domain/pools';
 import { schedulePools } from '../../domain/schedule/generate';
-import { type SetScore, scoreIssue } from '../../domain/scores';
+import {
+  forfeitBy,
+  isForfeit,
+  type MatchResult,
+  type SetScore,
+  scoreIssue,
+} from '../../domain/scores';
 import {
   isPoolComplete,
   levelPools,
@@ -64,7 +70,9 @@ export interface Draft {
   afternoon: Phase | null;
   final: Phase | null;
   /** Scores by match id, all phases. */
-  results: Record<string, SetScore[]>;
+  results: Record<string, MatchResult>;
+  /** Teams that left during the day: their remaining matches are forfeits (SPEC F11). */
+  withdrawn?: string[] | undefined;
   /** Set once published: public id, server version and fingerprint of what was sent. */
   publication: Publication | null;
   updatedAt: string;
@@ -365,6 +373,43 @@ export function setResult(draft: Draft, matchId: string, sets: SetScore[] | null
   return { ...draft, results };
 }
 
+/** Forfeit by one side of a match (`null` clears the result). */
+export function setForfeit(draft: Draft, matchId: string, side: 'a' | 'b' | null): Draft {
+  if (side === null) return setResult(draft, matchId, null);
+  return { ...draft, results: { ...draft.results, [matchId]: forfeitBy(side, draft.matchFormat) } };
+}
+
+export function withdrawnOf(draft: Draft): readonly string[] {
+  return draft.withdrawn ?? [];
+}
+
+/**
+ * A team leaves the tournament: every match of it still without a result becomes a
+ * forfeit by that team; later phases are built without it. Played matches are kept.
+ */
+export function withdrawTeam(draft: Draft, teamId: string): Draft {
+  if (withdrawnOf(draft).includes(teamId)) return draft;
+  const results = { ...draft.results };
+  for (const m of dayMatches(draft)) {
+    if (results[m.id] !== undefined) continue;
+    if (m.teamAId === teamId) results[m.id] = forfeitBy('a', draft.matchFormat);
+    else if (m.teamBId === teamId) results[m.id] = forfeitBy('b', draft.matchFormat);
+  }
+  return { ...draft, results, withdrawn: [...withdrawnOf(draft), teamId] };
+}
+
+/** Undoes a withdrawal: the team is back and its forfeits are cleared (to be played). */
+export function reinstateTeam(draft: Draft, teamId: string): Draft {
+  const results = { ...draft.results };
+  for (const m of dayMatches(draft)) {
+    const result = results[m.id];
+    if (!result || !isForfeit(result)) continue;
+    const forfeiter = result.forfeit === 'a' ? m.teamAId : m.teamBId;
+    if (forfeiter === teamId) delete results[m.id];
+  }
+  return { ...draft, results, withdrawn: withdrawnOf(draft).filter((t) => t !== teamId) };
+}
+
 function scoresOf(matches: readonly ScheduledMatch[], results: Results) {
   return matches.map((m) => [m.id, results[m.id] ?? null]);
 }
@@ -386,8 +431,14 @@ export function canGenerateAfternoon(draft: Draft): boolean {
   return (
     draft.schedule !== null &&
     !isScheduleStale(draft) &&
-    missingScores(draft.schedule.matches, draft.results) === 0
+    missingScores(draft.schedule.matches, draft.results) === 0 &&
+    activeTeams(draft).length >= LIMITS.minTeams
   );
+}
+
+function activeTeams(draft: Draft): string[] {
+  const gone = new Set(withdrawnOf(draft));
+  return draft.teams.map((t) => t.id).filter((t) => !gone.has(t));
 }
 
 /** Level pools from the morning ranking, after the lunch break. Clears afternoon scores. */
@@ -396,7 +447,9 @@ export function generateAfternoon(draft: Draft): Draft {
     throw new Error('Morning is not complete');
   }
   const morning = draft.schedule;
-  const pools = levelPools(overallRanking(draft.pools, morning.matches, draft.results));
+  const gone = new Set(withdrawnOf(draft));
+  const ranking = overallRanking(draft.pools, morning.matches, draft.results);
+  const pools = levelPools(ranking.filter((t) => !gone.has(t)));
   const schedule = schedulePools({
     ...timingOf(draft),
     pools,
@@ -412,8 +465,18 @@ export function generateAfternoon(draft: Draft): Draft {
   };
 }
 
+/**
+ * Stale when the morning changed, or when a team left out of the afternoon (withdrawn
+ * at the time) has been reinstated. A withdrawal during the afternoon is not: its
+ * matches become forfeits and the afternoon goes on.
+ */
 export function isAfternoonStale(draft: Draft): boolean {
-  return draft.afternoon !== null && draft.afternoon.key !== afternoonKeyOf(draft);
+  const afternoon = draft.afternoon;
+  if (afternoon === null) return false;
+  const inAfternoon = new Set(afternoon.pools.flatMap((p) => p.teamIds));
+  const gone = new Set(withdrawnOf(draft));
+  const reinstated = draft.teams.some((t) => !inAfternoon.has(t.id) && !gone.has(t.id));
+  return reinstated || afternoon.key !== afternoonKeyOf(draft);
 }
 
 function topPool(draft: Draft): PoolInput | undefined {
@@ -443,7 +506,10 @@ export function generateFinal(draft: Draft): Draft {
   const afternoon = draft.afternoon;
   const pool = topPool(draft);
   if (!canGenerateFinal(draft) || !afternoon || !pool) throw new Error('Top pool not complete');
-  const [first, second] = poolStandings(pool, afternoon.schedule.matches, draft.results);
+  const gone = new Set(withdrawnOf(draft));
+  const [first, second] = poolStandings(pool, afternoon.schedule.matches, draft.results).filter(
+    (row) => !gone.has(row.teamId),
+  );
   if (!first || !second) throw new Error('Top pool needs two teams');
   const pools = [{ id: 'F', teamIds: [first.teamId, second.teamId] }];
   const { courtIds, ...timing } = timingOf(draft);
@@ -466,11 +532,9 @@ export function isFinalStale(draft: Draft): boolean {
   return draft.final !== null && (isAfternoonStale(draft) || draft.final.key !== finalKeyOf(draft));
 }
 
-function withoutPhases(results: Results, prefixes: readonly string[]): Record<string, SetScore[]> {
+function withoutPhases(results: Results, prefixes: readonly string[]): Record<string, MatchResult> {
   return Object.fromEntries(
-    Object.entries(results)
-      .filter(([id]) => !prefixes.some((p) => id.startsWith(p)))
-      .map(([id, sets]) => [id, [...sets]]),
+    Object.entries(results).filter(([id]) => !prefixes.some((p) => id.startsWith(p))),
   );
 }
 

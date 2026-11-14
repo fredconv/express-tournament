@@ -133,7 +133,11 @@ _Moteur existant (E1) conservé tel quel ; aucune optimisation supplémentaire e
 - Contrôles simples : nombre de sets compatible avec le format, pas de set à égalité. Un match nul n'est possible que si le format le permet (tous les sets joués, en nombre pair) ; jamais en « sets gagnants ». La finale doit avoir un vainqueur : après une égalité, un set décisif est saisi.
 - Classement de poule (D11) : points (victoire 2, nul 1, défaite 0) par match joué, puis différence de sets par match, puis différence de points par match, puis ordre du tirage.
 
+- _Ajouté le 2026-11-13 à la demande de l'utilisateur :_ **forfait**. Dans le formulaire d'un match, « Forfait de A » / « Forfait de B » : l'autre équipe gagne avec les sets nécessaires (tous les sets, ou la majorité en sets gagnants), 0 point de jeu de part et d'autre (les différences de points ne bougent pas), 0 point de classement pour l'équipe forfait. Le forfait s'efface comme un score.
+- **Équipe partie** (blessure, départ) : depuis le filtre par équipe, « Équipe partie : forfait sur ses matchs restants » (avec confirmation) transforme tous ses matchs sans score en forfaits ; ses matchs déjà joués restent. Elle est marquée « (retirée) », n'est pas placée dans les poules de l'après-midi générées ensuite et ne peut pas être finaliste. Un retrait pendant l'après-midi ne force pas à régénérer l'après-midi. « Réintégrer l'équipe » efface ses forfaits.
+
 **Critères d'acceptation**
+- [x] CA11.4 (TA) Forfait : vainqueur, sets, 0 point ; équipe partie : forfaits sur les matchs restants, absente de l'après-midi et de la finale, réintégration ; document publié validé côté serveur (forfait falsifié refusé).
 - [x] CA11.1 (TA) Classement correct sur des cas de référence (égalités, match nul, poule incomplète).
 - [x] CA11.2 (TA) Un score incohérent est refusé avec un message clair.
 

@@ -8,6 +8,7 @@ import {
   isAfternoonStale,
   isFinalStale,
   isScheduleStale,
+  withdrawnOf,
 } from './model';
 
 // Conversion between the local draft and the published document (SPEC F9).
@@ -47,6 +48,7 @@ export function toDoc(draft: Draft): TournamentDoc {
     afternoon: draft.afternoon ? phase(draft.afternoon.pools, draft.afternoon.schedule) : null,
     final: draft.final ? phase(draft.final.pools, draft.final.schedule) : null,
     results: draft.results,
+    ...(withdrawnOf(draft).length > 0 ? { withdrawn: [...withdrawnOf(draft)] } : {}),
   };
 }
 
@@ -83,5 +85,6 @@ export function fromDoc(doc: TournamentDoc): Draft {
     afternoon: later(doc.afternoon),
     final: later(doc.final),
     results: doc.results,
+    withdrawn: doc.withdrawn ?? [],
   };
 }

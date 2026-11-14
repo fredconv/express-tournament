@@ -14,7 +14,11 @@ import {
   isFinalStale,
   isScheduleStale,
   missingScores,
+  reinstateTeam,
+  setForfeit,
   setResult,
+  withdrawnOf,
+  withdrawTeam,
 } from '../draft/model';
 import { fr } from '../i18n/fr';
 import { Champion, DaySummary, Legend, PhaseSection, TeamFilter, teamNameOf } from './DayView';
@@ -45,6 +49,10 @@ export function PlanningStep({ draft, update }: StepProps) {
         teamB={teamName(m.teamBId)}
         onSave={(sets) => {
           update((d) => setResult(d, m.id, sets));
+          setEditing(null);
+        }}
+        onForfeit={(side) => {
+          update((d) => setForfeit(d, m.id, side));
           setEditing(null);
         }}
         onClear={() => {
@@ -93,7 +101,18 @@ export function PlanningStep({ draft, update }: StepProps) {
           <Legend draft={draft} />
           <PhaseSection
             {...phaseProps}
-            beforeSchedule={<TeamFilter draft={draft} teamId={selectedTeam} onChange={setTeamId} />}
+            beforeSchedule={
+              <TeamFilter
+                draft={draft}
+                teamId={selectedTeam}
+                onChange={setTeamId}
+                teamActions={
+                  selectedTeam && (
+                    <WithdrawAction draft={draft} update={update} teamId={selectedTeam} />
+                  )
+                }
+              />
+            }
             title={fr.planning.morning}
             pools={draft.pools}
             schedule={morning}
@@ -165,6 +184,34 @@ export function PlanningStep({ draft, update }: StepProps) {
         </div>
       )}
     </div>
+  );
+}
+
+/** A team leaves (injury, departure…): its remaining matches become forfeits (SPEC F11). */
+function WithdrawAction({ draft, update, teamId: id }: StepProps & { teamId: string }) {
+  if (withdrawnOf(draft).includes(id)) {
+    return (
+      <p className="team-filter__withdrawn">
+        <strong>{fr.planning.withdrawn}</strong>
+        <button
+          type="button"
+          className="button"
+          onClick={() => update((d) => reinstateTeam(d, id))}
+        >
+          {fr.planning.reinstate}
+        </button>
+      </p>
+    );
+  }
+  const withdraw = () => {
+    if (window.confirm(fr.planning.confirmWithdraw(teamNameOf(draft)(id)))) {
+      update((d) => withdrawTeam(d, id));
+    }
+  };
+  return (
+    <button type="button" className="button button--danger-soft no-print" onClick={withdraw}>
+      {fr.planning.withdraw}
+    </button>
   );
 }
 
