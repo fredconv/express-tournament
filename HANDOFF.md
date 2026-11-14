@@ -38,7 +38,7 @@ Vérifications faites sur prévisualisation (navigateur intégré, viewport 375 
 
 ## En cours / reste à faire
 
-- **Lisibilité des enchaînements** (demande du 2026-11-14) : remplacer « ↻ Enchaîne » par « ↻ Rejoue juste après » (orange, heure + terrain du match suivant) et « ↳ Vient de jouer » (rouge, heure + terrain du match précédent), un badge par équipe, lien vers le match associé. Présentation seulement, moteur inchangé.
+- **PR #11 (ouverte, CI et Workers Builds verts)** : badges d'enchaînement orientés (orange « ↻ Rejoue juste après », rouge « ↳ Vient de jouer », un par équipe, heure/terrain cliquable), refus serveur des séries de 3, légende à la demande (bouton « ⓘ Légende » → popover). Vérifié sur prévisualisation (375 px et 1280 px : badges, saut vers le match, ouverture, Échap, clic extérieur). 135 tests. En attente de validation pour fusion.
 - **E5** : test terrain réel ; DoD finale (README, tag `v1.0.0`, coût 0 €).
 
 ## Recettes manuelles en attente (utilisateur, sur vrai téléphone)
