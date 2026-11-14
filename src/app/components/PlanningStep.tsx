@@ -21,7 +21,7 @@ import {
   withdrawTeam,
 } from '../draft/model';
 import { fr } from '../i18n/fr';
-import { Champion, DaySummary, Legend, PhaseSection, TeamFilter, teamNameOf } from './DayView';
+import { Champion, DaySummary, PhaseSection, TeamFilter, teamNameOf } from './DayView';
 import { ScoreForm } from './ScoreForm';
 import type { StepProps } from './stepProps';
 
@@ -98,7 +98,6 @@ export function PlanningStep({ draft, update }: StepProps) {
       {morning && (
         <div className={stale ? 'planning planning--stale' : 'planning'}>
           <DaySummary draft={draft} />
-          <Legend draft={draft} />
           <PhaseSection
             {...phaseProps}
             beforeSchedule={

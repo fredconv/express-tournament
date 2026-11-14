@@ -7,6 +7,7 @@ import type { PoolInput, ScheduledMatch, ScheduleResult } from '../../domain/typ
 import { describeFormat } from '../draft/labels';
 import { type Draft, exceedsTargetEnd, teamMatchCount } from '../draft/model';
 import { fr } from '../i18n/fr';
+import { BackToBackSample } from './BackToBackBadge';
 import { ScheduleView } from './ScheduleView';
 import { StandingsTable } from './StandingsTable';
 
@@ -114,21 +115,24 @@ export function TeamFilter({
 }) {
   return (
     <div className={`team-filter${teamId ? ' team-filter--active' : ''}`}>
-      <label className="field no-print">
-        <span className="field__label">{fr.planning.filter}</span>
-        <select
-          className="input"
-          value={teamId ?? ''}
-          onChange={(e) => onChange(e.target.value || null)}
-        >
-          <option value="">{fr.planning.allTeams}</option>
-          {draft.teams.map((t) => (
-            <option key={t.id} value={t.id}>
-              {teamNameOf(draft)(t.id)}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="team-filter__bar">
+        <label className="field no-print">
+          <span className="field__label">{fr.planning.filter}</span>
+          <select
+            className="input"
+            value={teamId ?? ''}
+            onChange={(e) => onChange(e.target.value || null)}
+          >
+            <option value="">{fr.planning.allTeams}</option>
+            {draft.teams.map((t) => (
+              <option key={t.id} value={t.id}>
+                {teamNameOf(draft)(t.id)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <Legend draft={draft} />
+      </div>
       {teamId && (
         <p className="team-filter__status" role="status">
           <span>
@@ -145,29 +149,122 @@ export function TeamFilter({
   );
 }
 
-/** Court colors and back-to-back marker (SPEC F13). */
+interface LegendItem {
+  key: string;
+  sample: ReactNode;
+  text: string;
+}
+
+const LEGEND_ID = 'planning-legend';
+
+/**
+ * "ⓘ Légende" button in the planning toolbar opening a popover (SPEC F13): nothing
+ * takes vertical space while closed. Native `popover`: closes on Escape, on a click
+ * outside or with its close button, keyboard accessible. Samples reuse the planning's
+ * own badges and classes and every entry is explained in words, so color is never the
+ * only cue. Add a section here for future statuses.
+ */
 export function Legend({ draft }: { draft: Draft }) {
+  const sections: { title: string; items: LegendItem[] }[] = [
+    {
+      title: fr.legend.backToBack,
+      items: [
+        { key: 'next', sample: <BackToBackSample direction="next" />, text: fr.legend.next },
+        {
+          key: 'previous',
+          sample: <BackToBackSample direction="previous" />,
+          text: fr.legend.previous,
+        },
+      ],
+    },
+    {
+      title: fr.legend.matches,
+      items: [
+        {
+          key: 'courts',
+          sample: (
+            <span className="legend__samples">
+              {draft.courts.map((court, i) => {
+                const color = courtColor(court, i);
+                const style = {
+                  '--court': color,
+                  '--court-text': textColorOn(color),
+                } as CSSProperties;
+                return (
+                  <span key={court.id} className="court-badge" style={style}>
+                    {court.name}
+                  </span>
+                );
+              })}
+            </span>
+          ),
+          text: fr.legend.courts,
+        },
+        {
+          key: 'selected',
+          sample: <span className="team--highlight">{fr.legend.teamSample}</span>,
+          text: fr.legend.selected,
+        },
+        {
+          key: 'winner',
+          sample: <span className="team--winner">{fr.legend.teamSample}</span>,
+          text: fr.legend.winner,
+        },
+        {
+          key: 'forfeit',
+          sample: <span className="match-card__vs--forfeit">{fr.legend.forfeitSample}</span>,
+          text: fr.legend.forfeit,
+        },
+      ],
+    },
+  ];
   return (
-    <div className="legend">
-      <p className="legend__title">{fr.planning.legend}</p>
-      <ul className="legend__items">
-        {draft.courts.map((court, i) => {
-          const color = courtColor(court, i);
-          const style = { '--court': color, '--court-text': textColorOn(color) } as CSSProperties;
-          return (
-            <li key={court.id}>
-              <span className="court-badge" style={style}>
-                {court.name}
-              </span>
-            </li>
-          );
-        })}
-        <li>
-          <span className="consecutive consecutive--sample">↻ {fr.planning.consecutive('…')}</span>{' '}
-          <span className="small">{fr.planning.legendConsecutive}</span>
-        </li>
-      </ul>
-    </div>
+    <>
+      <button
+        type="button"
+        className="button legend-button no-print"
+        popoverTarget={LEGEND_ID}
+        aria-haspopup="dialog"
+      >
+        <span aria-hidden="true">ⓘ </span>
+        {fr.legend.button}
+      </button>
+      <div
+        id={LEGEND_ID}
+        popover="auto"
+        className="legend"
+        role="dialog"
+        aria-labelledby={`${LEGEND_ID}-title`}
+      >
+        <div className="legend__header">
+          <h2 id={`${LEGEND_ID}-title`} className="legend__title">
+            {fr.legend.title}
+          </h2>
+          <button
+            type="button"
+            className="button button--ghost button--icon"
+            popoverTarget={LEGEND_ID}
+            popoverTargetAction="hide"
+            aria-label={fr.legend.close}
+          >
+            ✕
+          </button>
+        </div>
+        {sections.map((section) => (
+          <section key={section.title} className="legend__section">
+            <h3 className="legend__heading">{section.title}</h3>
+            <dl className="legend__list">
+              {section.items.map((item) => (
+                <div key={item.key} className="legend__row">
+                  <dt>{item.sample}</dt>
+                  <dd>{item.text}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))}
+      </div>
+    </>
   );
 }
 

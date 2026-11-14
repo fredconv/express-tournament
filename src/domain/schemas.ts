@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { forbiddenRuns } from './consecutive';
 import { isCourtColor } from './courtColors';
 import { suggestSlotMinutes } from './format';
 import { LIMITS } from './limits';
@@ -159,6 +160,8 @@ function docIssues(doc: z.infer<typeof docShape>): DocIssue[] {
       matches: phase.matches,
     });
     for (const error of errors) issue(`schedule: ${error.code}`, [key, 'matches']);
+    // SPEC F5 / ADR-12: never three slots in a row for a team.
+    if (forbiddenRuns(phase.matches).length > 0) issue('three matches in a row', [key, 'matches']);
     phases.push({ key, phase });
     const end = endOf(phase.matches);
     startMinute = end + (key === 'morning' ? doc.lunchMinutes : doc.transitionMinutes);

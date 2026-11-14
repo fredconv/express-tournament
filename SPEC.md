@@ -158,7 +158,9 @@ _Moteur existant (E1) conservé tel quel ; aucune optimisation supplémentaire e
 - Chaque terrain a une couleur, attribuée automatiquement (palette de 6 tons sombres) et modifiable dans les réglages. Elle apparaît en badge (avec le nom du terrain) et en bordure, jamais en fond de ligne, dans les réglages, l'éditeur, la page publique et l'impression.
 - Une équipe qui joue deux créneaux consécutifs de la même phase est signalée sur les deux matchs par un marqueur orange « ↻ Enchaîne : <équipe> » (information, pas une erreur), calculé à partir du planning.
 - _Corrigé le 2026-11-13 à la demande de l'utilisateur :_ pas de mise en évidence au survol ou au toucher (perdue au défilement). Le sélecteur d'équipe existant filtre le planning : seuls les matchs de l'équipe restent affichés (les autres sont masqués, pas supprimés), avec horaires, terrains, numéros et poules, le nombre de matchs, un indicateur « Planning filtré » et un bouton « Toutes les équipes ». Même composant dans l'éditeur et sur la page publique.
-- Créneaux horaires plus visibles avec le nombre de matchs joués en même temps ; légende compacte (terrains, marqueur d'enchaînement, mode d'emploi de la mise en évidence).
+- _Révisé le 2026-11-14 :_ enchaînements orientés, un badge par équipe concernée : orange « ↻ Rejoue juste après » sur le premier match (heure et terrain du suivant), rouge « ↳ Vient de jouer » sur le second (heure et terrain du précédent) ; l'heure/terrain est un bouton qui fait défiler jusqu'au match associé. Sens déterminé par l'ordre chronologique réel. Le serveur refuse tout planning publié avec trois matchs d'affilée.
+- Créneaux horaires plus visibles avec le nombre de matchs joués en même temps.
+- _Révisé le 2026-11-14 :_ légende consultable à la demande : bouton « ⓘ Légende » dans la barre du filtre, ouvrant une fenêtre (popover natif, fermeture par Échap, clic extérieur ou ✕) ; aucune place occupée quand elle est fermée ; mêmes badges et classes que le planning ; éditeur et page publique.
 - Aucune information transmise par la seule couleur ; contrastes AA ; impression lisible en noir et blanc.
 
 **Critères d'acceptation**

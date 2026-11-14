@@ -122,7 +122,10 @@ export const fr = {
     regenerateFinal: 'Régénérer la finale',
     winner: (name: string) => `Vainqueur du tournoi : ${name}`,
     simultaneous: (n: number) => (n > 1 ? `${n} matchs en même temps` : '1 match'),
-    consecutive: (names: string) => `Enchaîne : ${names}`,
+    b2bNext: 'Rejoue juste après',
+    b2bPrevious: 'Vient de jouer',
+    b2bWhere: (time: string, court: string) => `à ${time} (${court})`,
+    b2bJump: 'Aller à ce match',
     filtered: (name: string, n: number) =>
       `Planning filtré : ${name} · ${n} match${n > 1 ? 's' : ''}`,
     showAll: 'Toutes les équipes',
@@ -135,7 +138,23 @@ export const fr = {
     noMatchForTeam: 'Aucun match de cette équipe dans cette phase.',
     legend: 'Légende',
     legendConsecutive:
-      'équipe qui joue deux créneaux de suite, sans repos (information, pas une erreur)',
+      'deux créneaux de suite sans repos : en orange sur le premier match, en rouge sur le second (information, pas une erreur ; jamais trois de suite)',
+  },
+  legend: {
+    button: 'Légende',
+    title: 'Légende du planning',
+    close: 'Fermer la légende',
+    backToBack: 'Enchaînement des matchs',
+    next: 'L’équipe joue un autre match juste après celui-ci, sans créneau de repos. L’heure et le terrain du match suivant sont indiqués.',
+    previous:
+      'L’équipe sort d’un match au créneau précédent : c’est son deuxième match de suite (jamais trois). Information, pas une erreur.',
+    matches: 'Identification des matchs',
+    courts: 'Chaque terrain a sa couleur, toujours accompagnée de son nom.',
+    teamSample: 'Équipe',
+    selected: 'Surligné : l’équipe choisie dans « Afficher ».',
+    winner: 'Gras souligné : l’équipe qui a gagné le match.',
+    forfeitSample: 'forfait de …',
+    forfeit: 'Match non joué : l’équipe nommée a déclaré forfait.',
   },
   score: {
     enter: 'Saisir le score',
