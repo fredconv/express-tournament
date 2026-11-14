@@ -168,6 +168,20 @@ _Moteur existant (E1) conservé tel quel ; aucune optimisation supplémentaire e
 - [x] CA13.2 (TA) Les enchaînements détectés couvrent les deux matchs et toutes les équipes concernées, et concordent avec les alertes du moteur.
 - [ ] CA13.3 (RM) Planning lisible sur téléphone, ordinateur et PDF (couleur et noir et blanc).
 
+### F14 — Équipes : génération, bibliothèque et duplication (demandé par l'utilisateur le 2026-11-14)
+- Étape Équipes : trois modes, un à la fois, au-dessus de la liste des équipes inscrites (toujours visible) : **Saisie** (saisie et collage, inchangés), **Générer**, **Réutiliser**.
+- **Générer** : N équipes fictives (128 noms locaux sur le volley, sans réseau ni IA), sans doublon dans le tournoi, dans la limite de 32. Avec des équipes présentes : « Ajouter » ou « Remplacer » (après confirmation). « Nouvelle liste » remplace seulement la dernière génération. Jamais enregistrées automatiquement dans la bibliothèque.
+- **Bibliothèque** (sur l'appareil de l'organisateur, jamais publiée, ADR-13) : ☆ sur une équipe pour l'enregistrer, « Enregistrer les nouvelles équipes » pour toutes ; ★ indique une équipe déjà enregistrée. **Réutiliser** : recherche (casse, accents et espaces ignorés), cases à cocher, tout sélectionner / désélectionner, compteur, « Ajouter la sélection » ; une équipe déjà inscrite est grisée « déjà inscrite ». **Gérer ma bibliothèque** : total, recherche, renommer (refus d'un nom existant), supprimer une ou plusieurs équipes après confirmation.
+- Doublons comparés sans tenir compte de la casse, des espaces superflus ni de la normalisation Unicode, dans le tournoi comme dans la bibliothèque. Aucune fusion automatique.
+- **Historique** : ajouter une équipe de la bibliothèque copie son nom dans le tournoi (nouvel identifiant). Renommer ou supprimer dans la bibliothèque ne change jamais un tournoi, ses matchs, scores ni classements.
+- **Dupliquer** (liste des tournois) : nouveau brouillon « <nom> — Copie », date du jour, mêmes équipes (noms), terrains (noms, couleurs), format, horaires, pause, fin souhaitée, option repos, verrouillages de poule. Jamais repris : poules tirées, matchs, scores, forfaits, équipes retirées, publication. L'original n'est pas modifié ; la copie s'ouvre dans l'éditeur.
+
+**Critères d'acceptation**
+- [x] CA14.1 (TA) Génération : 15 équipes uniques, limite de 32, équipes existantes conservées, remplacement, aucun enregistrement automatique.
+- [x] CA14.2 (TA) Bibliothèque : enregistrement simple et multiple sans doublon (Unicode), recherche, renommage avec conflit, suppression simple et multiple, bibliothèques séparées par appareil, absente du document publié.
+- [x] CA14.3 (TA) Historique : renommer puis supprimer une équipe de la bibliothèque laisse le tournoi, ses scores et son classement identiques.
+- [x] CA14.4 (TA) Duplication : équipes et réglages copiés, rien de sportif ni de publication, copie indépendante, original intact, fonctionne même si des équipes ont été supprimées de la bibliothèque.
+
 ### F6 — Consultation du planning (PC et smartphone)
 - Page publique `/t/{idPublic}` lisible sans connexion de compte.
 - Mobile (≥ 360 px) : liste chronologique groupée par créneau (heure, terrain, équipes, n° de match).

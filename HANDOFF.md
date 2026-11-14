@@ -1,6 +1,6 @@
 # HANDOFF — Tournoi Express
 
-Dernière mise à jour : 2026-11-14 (Claude Code)
+Dernière mise à jour : 2026-11-14, soir (Claude Code)
 
 ## Résumé
 
@@ -12,7 +12,7 @@ App web (React + Hono sur Cloudflare Workers + D1) pour organiser un tournoi de 
 
 ## Fait (vérifié dans le dépôt le 2026-11-14)
 
-`main` à `143e7fa`, aucune PR ouverte, `npm run check` vert (131 tests).
+`main` à `dc51f70` (PR #11 fusionnée), `npm run check` vert.
 
 | PR | Contenu |
 |---|---|
@@ -23,6 +23,7 @@ App web (React + Hono sur Cloudflare Workers + D1) pour organiser un tournoi de 
 | #7 | Filtre par équipe placé entre les classements et le premier créneau. |
 | #8 | Moteur (ADR-12) : jamais 3 matchs d'affilée (un terrain attend si besoin), puis moins de doubles, équité, durée. |
 | #9 | Verrouillage d'équipes dans une poule du matin (onglet Équipes). |
+| #11 | Enchaînements orientés (orange « Rejoue juste après », rouge « Vient de jouer »), légende à la demande. |
 | #10 | Forfait par match et « équipe partie » (forfaits automatiques, exclue des phases suivantes, réintégration possible). |
 
 Vérifications faites sur prévisualisation (navigateur intégré, viewport 375 × 812 et 1280 px) : parcours complet 13 et 15 équipes, publication, mise à jour, page publique, filtre, impression simulée (couleur et niveaux de gris), verrouillages, forfaits. Production : santé API/D1 OK, nouvelles chaînes présentes dans le bundle après chaque fusion.
@@ -38,7 +39,8 @@ Vérifications faites sur prévisualisation (navigateur intégré, viewport 375 
 
 ## En cours / reste à faire
 
-- **PR #11 (ouverte, CI et Workers Builds verts)** : badges d'enchaînement orientés (orange « ↻ Rejoue juste après », rouge « ↳ Vient de jouer », un par équipe, heure/terrain cliquable), refus serveur des séries de 3, légende à la demande (bouton « ⓘ Légende » → popover). Vérifié sur prévisualisation (375 px et 1280 px : badges, saut vers le match, ouverture, Échap, clic extérieur). 135 tests. En attente de validation pour fusion.
+- **Branche `e5-equipes-bibliotheque` (PR à valider, ne pas fusionner sans accord)** : génération d'équipes fictives, bibliothèque d'équipes sur l'appareil (ADR-13), réutilisation, gestion, duplication de tournoi (SPEC F14). 153 tests.
+- **Ensuite** : filtre par terrain combiné au filtre par équipe (BACKLOG A27), branche et PR dédiées.
 - **E5** : test terrain réel ; DoD finale (README, tag `v1.0.0`, coût 0 €).
 
 ## Recettes manuelles en attente (utilisateur, sur vrai téléphone)
