@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { newId } from '../../client/ids';
 import { LIMITS } from '../../domain/limits';
 import { poolSizes } from '../../domain/pools';
+import { libraryHas, saveToLibrary } from '../draft/library';
 import {
   type AddTeamsResult,
   addTeams,
@@ -13,40 +14,96 @@ import {
   setPoolLock,
   teamNameIssue,
 } from '../draft/model';
+import { useLibrary } from '../draft/useLibrary';
 import { fr } from '../i18n/fr';
+import { GenerateTeams } from './GenerateTeams';
+import { LibraryPanel } from './LibraryPanel';
 import type { StepProps } from './stepProps';
 
+type Mode = 'type' | 'generate' | 'reuse';
+const MODES: readonly Mode[] = ['type', 'generate', 'reuse'];
+
+/**
+ * Teams of this tournament (SPEC F2, F14). Three ways to add them, one at a time:
+ * typing or pasting, fictional names, or the library. The tournament list stays below.
+ */
 export function TeamsStep({ draft, update }: StepProps) {
+  const [mode, setMode] = useState<Mode>('type');
   const [text, setText] = useState('');
   const [report, setReport] = useState<Omit<AddTeamsResult, 'draft'> | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
+  const { library, update: updateLibrary } = useLibrary();
+  const unsaved = draft.teams.filter((t) => !libraryHas(library, t.name));
+
+  const showReport = (next: Omit<AddTeamsResult, 'draft'>) => {
+    setReport(next);
+    setSaved(null);
+  };
 
   const submit = () => {
     const result = addTeams(draft, text, newId);
     update(() => result.draft);
-    setReport({ added: result.added, rejected: result.rejected });
+    showReport({ added: result.added, rejected: result.rejected });
     setText(result.rejected.map((r) => r.name).join('\n'));
+  };
+
+  const save = (names: string[]) => {
+    const result = saveToLibrary(library, names, newId);
+    updateLibrary(() => result.library);
+    setSaved(fr.teams.savedReport(result.added.length));
   };
 
   return (
     <div className="form">
-      <label className="field">
-        <span className="field__label">{fr.teams.paste}</span>
-        <textarea
-          className="input input--multiline"
-          rows={4}
-          value={text}
-          placeholder={fr.teams.pastePlaceholder}
-          onChange={(e) => setText(e.target.value)}
+      <div className="segmented" role="radiogroup" aria-label={fr.teams.modesLabel}>
+        {MODES.map((m) => (
+          <label key={m} className="segmented__option">
+            <input
+              type="radio"
+              name="team-mode"
+              checked={mode === m}
+              onChange={() => {
+                setMode(m);
+                setReport(null);
+              }}
+            />
+            {fr.teams.modes[m]}
+          </label>
+        ))}
+      </div>
+
+      {mode === 'generate' && <GenerateTeams draft={draft} update={update} onReport={showReport} />}
+      {mode === 'reuse' && (
+        <LibraryPanel
+          draft={draft}
+          update={update}
+          library={library}
+          updateLibrary={updateLibrary}
+          onReport={showReport}
         />
-      </label>
-      <button
-        type="button"
-        className="button button--primary"
-        onClick={submit}
-        disabled={text.trim() === ''}
-      >
-        {fr.teams.add}
-      </button>
+      )}
+      {mode === 'type' && (
+        <>
+          <label className="field">
+            <span className="field__label">{fr.teams.paste}</span>
+            <textarea
+              className="input input--multiline"
+              rows={4}
+              value={text}
+              placeholder={fr.teams.pastePlaceholder}
+              onChange={(e) => setText(e.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            className="button button--primary"
+            onClick={submit}
+            disabled={text.trim() === ''}
+          >
+            {fr.teams.add}
+          </button>
+        </>
+      )}
 
       {report && (
         <div className="notice" role="status">
@@ -59,7 +116,19 @@ export function TeamsStep({ draft, update }: StepProps) {
         </div>
       )}
 
+      {saved && (
+        <p className="notice" role="status">
+          {saved}
+        </p>
+      )}
+
+      <h2 className="team-list__title">{fr.teams.listTitle(draft.teams.length)}</h2>
       <p className="muted small">{fr.teams.count(draft.teams.length, LIMITS.maxTeams)}</p>
+      {unsaved.length > 0 && draft.teams.length > 1 && (
+        <button type="button" className="button" onClick={() => save(unsaved.map((t) => t.name))}>
+          ☆ {fr.teams.saveNew(unsaved.length)}
+        </button>
+      )}
       {draft.teams.length >= LIMITS.minTeams && <PoolLockSummary draft={draft} />}
       {draft.teams.length === 0 ? (
         <p className="muted">{fr.teams.empty}</p>
@@ -69,6 +138,8 @@ export function TeamsStep({ draft, update }: StepProps) {
             <TeamRow
               key={team.id}
               name={team.name}
+              inLibrary={libraryHas(library, team.name)}
+              onSave={() => save([team.name])}
               lock={locksOf(draft)[team.id] ?? null}
               poolCount={morningPoolCount(draft)}
               onLock={(poolIndex) => update((d) => setPoolLock(d, team.id, poolIndex))}
@@ -115,6 +186,8 @@ function PoolLockSummary({ draft }: Pick<StepProps, 'draft'>) {
 
 interface TeamRowProps {
   name: string;
+  inLibrary: boolean;
+  onSave: () => void;
   lock: number | null;
   poolCount: number;
   onLock: (poolIndex: number | null) => void;
@@ -123,7 +196,17 @@ interface TeamRowProps {
   onRemove: () => void;
 }
 
-function TeamRow({ name, lock, poolCount, onLock, issue, onRename, onRemove }: TeamRowProps) {
+function TeamRow({
+  name,
+  inLibrary,
+  onSave,
+  lock,
+  poolCount,
+  onLock,
+  issue,
+  onRename,
+  onRemove,
+}: TeamRowProps) {
   const [value, setValue] = useState(name);
   const problem = value === name ? null : issue(value);
 
@@ -145,6 +228,22 @@ function TeamRow({ name, lock, poolCount, onLock, issue, onRename, onRemove }: T
           if (e.key === 'Enter') e.currentTarget.blur();
         }}
       />
+      {inLibrary ? (
+        <span className="team-list__saved" title={fr.teams.savedOne(name)}>
+          <span aria-hidden="true">★</span>
+          <span className="visually-hidden">{fr.teams.savedOne(name)}</span>
+        </span>
+      ) : (
+        <button
+          type="button"
+          className="button button--ghost button--icon team-list__save"
+          aria-label={fr.teams.saveOne(name)}
+          title={fr.teams.saveOne(name)}
+          onClick={onSave}
+        >
+          ☆
+        </button>
+      )}
       <select
         className={`input team-list__pool${lock === null ? '' : ' team-list__pool--locked'}`}
         value={lock ?? ''}
