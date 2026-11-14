@@ -122,7 +122,10 @@ export const fr = {
     regenerateFinal: 'Régénérer la finale',
     winner: (name: string) => `Vainqueur du tournoi : ${name}`,
     simultaneous: (n: number) => (n > 1 ? `${n} matchs en même temps` : '1 match'),
-    consecutive: (names: string) => `Enchaîne : ${names}`,
+    b2bNext: 'Rejoue juste après',
+    b2bPrevious: 'Vient de jouer',
+    b2bWhere: (time: string, court: string) => `à ${time} (${court})`,
+    b2bJump: 'Aller à ce match',
     filtered: (name: string, n: number) =>
       `Planning filtré : ${name} · ${n} match${n > 1 ? 's' : ''}`,
     showAll: 'Toutes les équipes',
@@ -135,7 +138,7 @@ export const fr = {
     noMatchForTeam: 'Aucun match de cette équipe dans cette phase.',
     legend: 'Légende',
     legendConsecutive:
-      'équipe qui joue deux créneaux de suite, sans repos (information, pas une erreur)',
+      'deux créneaux de suite sans repos : en orange sur le premier match, en rouge sur le second (information, pas une erreur ; jamais trois de suite)',
   },
   score: {
     enter: 'Saisir le score',

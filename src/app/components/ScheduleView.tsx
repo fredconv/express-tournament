@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { consecutiveTeams } from '../../domain/consecutive';
+import { backToBackLinks } from '../../domain/consecutive';
 import { courtColor, textColorOn } from '../../domain/courtColors';
 import { isForfeit, outcome } from '../../domain/scores';
 import type { Results } from '../../domain/standings';
@@ -7,6 +7,7 @@ import { formatTime } from '../../domain/time';
 import type { ScheduledMatch } from '../../domain/types';
 import type { Court, NamedItem } from '../draft/model';
 import { fr } from '../i18n/fr';
+import { BackToBackBadge } from './BackToBackBadge';
 
 interface ScheduleViewProps {
   matches: readonly ScheduledMatch[];
@@ -30,7 +31,8 @@ export function ScheduleView(props: ScheduleViewProps) {
   const teamName = new Map(teams.map((t) => [t.id, t.name]));
   const name = (id: string) => teamName.get(id) ?? '?';
   const courtIndex = new Map(courts.map((c, i) => [c.id, i]));
-  const consecutive = consecutiveTeams(matches);
+  // Computed on the whole phase so links survive the team filter.
+  const links = backToBackLinks(matches);
   const visible = teamId
     ? matches.filter((m) => m.teamAId === teamId || m.teamBId === teamId)
     : matches;
@@ -51,7 +53,7 @@ export function ScheduleView(props: ScheduleViewProps) {
   const body = (m: ScheduledMatch) => {
     const sets = results[m.id];
     const winner = sets ? outcome(sets).winner : null;
-    const tired = consecutive.get(m.id);
+    const matchLinks = links.get(m.id) ?? [];
     return (
       <>
         <span className="match-card__teams">
@@ -67,10 +69,16 @@ export function ScheduleView(props: ScheduleViewProps) {
           </span>
           {team(m.teamBId, winner === 'b')}
         </span>
-        {tired && (
-          <span className="consecutive">
-            <span aria-hidden="true">↻ </span>
-            {fr.planning.consecutive(tired.map(name).join(', '))}
+        {matchLinks.length > 0 && (
+          <span className="b2b-list">
+            {matchLinks.map((link) => (
+              <BackToBackBadge
+                key={`${link.teamId}-${link.direction}`}
+                link={link}
+                teamName={name(link.teamId)}
+                courtName={courts[courtIndex.get(link.other.courtId) ?? 0]?.name ?? ''}
+              />
+            ))}
           </span>
         )}
       </>
@@ -99,7 +107,12 @@ export function ScheduleView(props: ScheduleViewProps) {
             </h4>
             <ul className="schedule-list__matches">
               {timeMatches.map((m) => (
-                <li key={m.id} className="match-card" style={courtStyle(m.courtId)}>
+                <li
+                  key={m.id}
+                  className="match-card"
+                  data-match-id={m.id}
+                  style={courtStyle(m.courtId)}
+                >
                   <span className="match-card__meta">
                     {courtBadge(m.courtId)} {fr.planning.match(m.number)} · {poolLabel(m.poolId)}
                   </span>
@@ -134,7 +147,12 @@ export function ScheduleView(props: ScheduleViewProps) {
                   {courts.map((c) => {
                     const m = timeMatches.find((x) => x.courtId === c.id);
                     return m ? (
-                      <td key={c.id} className="schedule-grid__cell" style={courtStyle(c.id)}>
+                      <td
+                        key={c.id}
+                        className="schedule-grid__cell"
+                        data-match-id={m.id}
+                        style={courtStyle(c.id)}
+                      >
                         <span className="schedule-grid__number">
                           #{m.number} · {poolLabel(m.poolId)}
                         </span>

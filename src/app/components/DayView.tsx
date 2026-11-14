@@ -163,7 +163,8 @@ export function Legend({ draft }: { draft: Draft }) {
           );
         })}
         <li>
-          <span className="consecutive consecutive--sample">↻ {fr.planning.consecutive('…')}</span>{' '}
+          <span className="b2b b2b--next">↻ {fr.planning.b2bNext}</span>{' '}
+          <span className="b2b b2b--previous">↳ {fr.planning.b2bPrevious}</span>{' '}
           <span className="small">{fr.planning.legendConsecutive}</span>
         </li>
       </ul>

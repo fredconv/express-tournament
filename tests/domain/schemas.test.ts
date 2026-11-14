@@ -77,6 +77,21 @@ describe('tournamentDocSchema', () => {
     expect(accepts(missingTeam)).toBe(false);
   });
 
+  it('rejects a published schedule where a team plays three in a row', () => {
+    const doc = toDoc(playedDay());
+    const forged = structuredClone(doc);
+    const [first] = forged.morning.matches;
+    const team = (first as { teamAId: string }).teamAId;
+    // Put the team's matches on slots 0, 1, 2 by swapping slot numbers only.
+    const own = forged.morning.matches.filter((m) => m.teamAId === team || m.teamBId === team);
+    own.slice(0, 3).forEach((m, slot) => {
+      m.slot = slot;
+    });
+    const result = tournamentDocSchema.safeParse(forged);
+    expect(result.success).toBe(false);
+    expect(JSON.stringify(result.error?.issues)).toContain('three matches in a row');
+  });
+
   it('rejects invalid or orphan scores', () => {
     const doc = toDoc(playedDay());
     const finalId = doc.final?.matches[0]?.id as string;

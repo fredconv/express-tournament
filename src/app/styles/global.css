@@ -643,6 +643,9 @@ a.button {
   --color-consecutive: #8a4b00;
   --color-consecutive-bg: #fff1df;
   --color-consecutive-border: #e8890c;
+  --color-just-played: #a3201a;
+  --color-just-played-bg: #fde8e7;
+  --color-just-played-border: #d9453b;
 }
 
 .court-row {
@@ -702,19 +705,6 @@ a.button {
   color: var(--color-muted);
 }
 
-.consecutive {
-  justify-self: start;
-  padding: 0.05rem 0.4rem;
-  border-left: 3px solid var(--color-consecutive-border);
-  border-radius: 0.2rem;
-  background: var(--color-consecutive-bg);
-  color: var(--color-consecutive);
-  font-size: 0.78rem;
-  font-weight: 600;
-  print-color-adjust: exact;
-  -webkit-print-color-adjust: exact;
-}
-
 .schedule-grid__time {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -730,11 +720,6 @@ a.button {
 
 .schedule-grid__cell .match-card__teams {
   display: flex;
-}
-
-.schedule-grid__cell .consecutive {
-  display: inline-block;
-  margin-top: 0.2rem;
 }
 
 .team-filter {
@@ -815,6 +800,54 @@ a.button {
 .button--danger-soft {
   border-color: var(--color-error);
   color: var(--color-error);
+}
+
+.b2b-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.b2b {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.2rem;
+  padding: 0.1rem 0.45rem;
+  border-left: 3px solid;
+  border-radius: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.b2b--next {
+  border-color: var(--color-consecutive-border);
+  background: var(--color-consecutive-bg);
+  color: var(--color-consecutive);
+}
+
+.b2b--previous {
+  border-color: var(--color-just-played-border);
+  background: var(--color-just-played-bg);
+  color: var(--color-just-played);
+}
+
+.b2b__jump {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.is-target {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .legend {

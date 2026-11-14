@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDraft, setCourtColor, setCourtCount } from '../../src/app/draft/model';
-import { consecutiveTeams } from '../../src/domain/consecutive';
+import { backToBackLinks, forbiddenRuns } from '../../src/domain/consecutive';
 import {
   COURT_PALETTE,
   contrastRatio,
@@ -46,49 +46,83 @@ describe('court colors (SPEC F13)', () => {
   });
 });
 
-describe('consecutive matches (SPEC F13)', () => {
-  const match = (id: string, slot: number, a: string, b: string): ScheduledMatch => ({
+describe('back-to-back links (SPEC F13)', () => {
+  const match = (
+    id: string,
+    slot: number,
+    a: string,
+    b: string,
+    courtId = 'c1',
+  ): ScheduledMatch => ({
     id,
     poolId: 'P1',
-    number: 1,
+    number: Number(id.slice(1)),
     slot,
-    courtId: 'c1',
+    courtId,
     teamAId: a,
     teamBId: b,
-    startMinute: slot * 25,
-    endMinute: slot * 25 + 20,
+    startMinute: 600 + slot * 27,
+    endMinute: 600 + slot * 27 + 22,
+  });
+  const summary = (links: ReturnType<typeof backToBackLinks>, id: string) =>
+    (links.get(id) ?? []).map((l) => `${l.teamId}:${l.direction}:${l.other.id}`);
+
+  it('one team: orange on the first match, red on the second, with the other match', () => {
+    const links = backToBackLinks([match('m1', 0, 'A', 'B'), match('m2', 1, 'A', 'C', 'c4')]);
+    expect(summary(links, 'm1')).toEqual(['A:next:m2']);
+    expect(summary(links, 'm2')).toEqual(['A:previous:m1']);
+    expect(links.get('m1')?.[0]?.other).toMatchObject({ courtId: 'c4', startMinute: 627 });
   });
 
-  it('marks both matches of a team playing two slots in a row, for every team concerned', () => {
-    const marks = consecutiveTeams([
-      match('m1', 0, 'A', 'B'),
-      match('m2', 0, 'C', 'D'),
-      match('m3', 1, 'A', 'C'),
-      match('m4', 2, 'B', 'D'),
-      match('m5', 3, 'B', 'C'),
+  it('both teams of a match: one badge per team (Sans Pression / Balles à Zéro case)', () => {
+    const links = backToBackLinks([
+      match('m13', 0, 'VolleyDingues', 'SansPression', 'c1'),
+      match('m14', 0, 'Manchettes', 'BallesAZero', 'c2'),
+      match('m20', 1, 'SansPression', 'BallesAZero', 'c4'),
     ]);
-    expect(marks.get('m1')).toEqual(['A']);
-    expect(marks.get('m2')).toEqual(['C']);
-    expect(marks.get('m3')).toEqual(['A', 'C']);
-    expect(marks.get('m4')).toEqual(['B']);
-    expect(marks.get('m5')).toEqual(['B']);
+    expect(summary(links, 'm13')).toEqual(['SansPression:next:m20']);
+    expect(summary(links, 'm14')).toEqual(['BallesAZero:next:m20']);
+    expect(summary(links, 'm20')).toEqual([
+      'SansPression:previous:m13',
+      'BallesAZero:previous:m14',
+    ]);
   });
 
-  it('agrees with the engine back-to-back warnings', () => {
-    const result = schedule(8, 3);
-    const marks = consecutiveTeams(result.matches);
-    for (const w of result.warnings) {
-      if (w.kind !== 'back-to-back') continue;
-      for (const team of w.teamIds) {
-        const m = result.matches.find(
-          (x) => x.slot === w.slot && (x.teamAId === team || x.teamBId === team),
-        ) as ScheduledMatch;
-        expect(marks.get(m.id)).toContain(team);
+  it('a run of three would show both states on the middle match, and is detected as forbidden', () => {
+    const run = [match('m1', 0, 'A', 'B'), match('m2', 1, 'A', 'C'), match('m3', 2, 'A', 'D')];
+    expect(summary(backToBackLinks(run), 'm2')).toEqual(['A:previous:m1', 'A:next:m3']);
+    expect(forbiddenRuns(run)).toEqual(['A']);
+    expect(forbiddenRuns(run.slice(0, 2))).toEqual([]);
+  });
+
+  it('uses real time order, not match numbers', () => {
+    const links = backToBackLinks([match('m9', 1, 'A', 'B'), match('m2', 0, 'A', 'C')]);
+    expect(summary(links, 'm2')).toEqual(['A:next:m9']);
+    expect(summary(links, 'm9')).toEqual(['A:previous:m2']);
+  });
+
+  it('no link when every team rests between its matches', () => {
+    expect(backToBackLinks([match('m1', 0, 'A', 'B'), match('m2', 2, 'A', 'B')]).size).toBe(0);
+  });
+
+  it('agrees with the engine warnings and never sees a forbidden run in generated schedules', () => {
+    for (const [teams, courts] of [
+      [8, 3],
+      [13, 3],
+      [16, 4],
+    ] as const) {
+      const result = schedule(teams, courts);
+      const links = backToBackLinks(result.matches);
+      for (const w of result.warnings) {
+        if (w.kind !== 'back-to-back') continue;
+        for (const team of w.teamIds) {
+          const m = result.matches.find(
+            (x) => x.slot === w.slot && (x.teamAId === team || x.teamBId === team),
+          ) as ScheduledMatch;
+          expect(summary(links, m.id).some((s) => s.startsWith(`${team}:previous`))).toBe(true);
+        }
       }
+      expect(forbiddenRuns(result.matches), `${teams}/${courts}`).toEqual([]);
     }
-  });
-
-  it('marks nothing when every team rests between its matches', () => {
-    expect(consecutiveTeams([match('m1', 0, 'A', 'B'), match('m2', 2, 'A', 'B')]).size).toBe(0);
   });
 });
