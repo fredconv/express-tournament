@@ -1,3 +1,4 @@
+import type { LibraryTeam } from '../app/draft/library';
 import type { Draft } from '../app/draft/model';
 
 // Only module allowed to touch localStorage (AGENTS.md §4).
@@ -106,3 +107,39 @@ function safe<T>(action: () => T): T | undefined {
 }
 
 export const deviceStore = createDeviceStore();
+
+const LIBRARY_KEY = 'et:team-library:v1';
+
+/**
+ * Team library (SPEC F14, ADR-13): kept on this device only, never sent to the server,
+ * so it can never appear on a public page and each organizer's device has its own.
+ */
+export function createLibraryStore(store: KeyValueStore | null = defaultStore()) {
+  let memory: LibraryTeam[] = [];
+  const valid = (value: unknown): value is LibraryTeam =>
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as LibraryTeam).id === 'string' &&
+    typeof (value as LibraryTeam).name === 'string';
+
+  return {
+    list(): LibraryTeam[] {
+      if (!store) return memory;
+      try {
+        const parsed: unknown = JSON.parse(store.getItem(LIBRARY_KEY) ?? '[]');
+        return Array.isArray(parsed) ? parsed.filter(valid) : [];
+      } catch {
+        return [];
+      }
+    },
+    save(library: readonly LibraryTeam[]): void {
+      if (!store) {
+        memory = [...library];
+        return;
+      }
+      safe(() => store.setItem(LIBRARY_KEY, JSON.stringify(library)));
+    },
+  };
+}
+
+export const libraryStore = createLibraryStore();

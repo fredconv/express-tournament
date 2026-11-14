@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { newId, todayIso } from '../../client/ids';
 import { draftStore } from '../../client/storage';
-import { createDraft } from '../draft/model';
+import { createDraft, type Draft, duplicateDraft } from '../draft/model';
 import { fr } from '../i18n/fr';
 
 export function HomePage() {
@@ -13,6 +13,18 @@ export function HomePage() {
     const draft = createDraft(todayIso(), newId, new Date().toISOString());
     draftStore.save(draft);
     navigate(`/edit/${draft.id}`);
+  };
+
+  const duplicate = (source: Draft) => {
+    const copy = duplicateDraft(
+      source,
+      fr.home.copySuffix,
+      todayIso(),
+      newId,
+      new Date().toISOString(),
+    );
+    draftStore.save(copy);
+    navigate(`/edit/${copy.id}`);
   };
 
   const remove = (id: string) => {
@@ -43,6 +55,14 @@ export function HomePage() {
                   {formatDate(d.date)} · {fr.home.teamsCount(d.teams.length)}
                 </span>
               </Link>
+              <button
+                type="button"
+                className="button button--ghost"
+                onClick={() => duplicate(d)}
+                aria-label={fr.home.duplicateOf(d.name.trim() || fr.home.untitled)}
+              >
+                {fr.home.duplicate}
+              </button>
               <button
                 type="button"
                 className="button button--ghost"

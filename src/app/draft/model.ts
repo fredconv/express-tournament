@@ -18,6 +18,7 @@ import {
   poolStandings,
   type Results,
 } from '../../domain/standings';
+import { fictionalTeamNames } from '../../domain/teamNames';
 import { isValidTime, parseTime } from '../../domain/time';
 import type {
   MatchFormat,
@@ -126,6 +127,41 @@ export function createDraft(today: string, newId: IdFactory, now: string): Draft
   };
 }
 
+/**
+ * New edition of a tournament (SPEC F14): same teams (names copied, new ids), courts and
+ * settings, pool locks re-pointed to the new teams. Never copied: date (today instead),
+ * pools, matches, scores, forfeits, withdrawals, publication. The original is untouched.
+ */
+export function duplicateDraft(
+  source: Draft,
+  copySuffix: string,
+  today: string,
+  newId: IdFactory,
+  now: string,
+): Draft {
+  const teamIds = new Map(source.teams.map((t) => [t.id, newId('t')]));
+  const poolLocks = Object.fromEntries(
+    Object.entries(locksOf(source)).flatMap(([teamId, pool]) => {
+      const id = teamIds.get(teamId);
+      return id === undefined ? [] : [[id, pool]];
+    }),
+  );
+  return {
+    ...createDraft(today, newId, now),
+    name: `${source.name.trim()}${copySuffix}`.slice(0, LIMITS.tournamentNameMax),
+    location: source.location,
+    matchFormat: source.matchFormat,
+    startTime: source.startTime,
+    transitionMinutes: source.transitionMinutes,
+    avoidBackToBack: source.avoidBackToBack,
+    targetEndTime: source.targetEndTime,
+    lunchMinutes: source.lunchMinutes,
+    courts: source.courts.map((c) => ({ ...c, id: newId('c') })),
+    teams: source.teams.map((t) => ({ id: teamIds.get(t.id) as string, name: t.name })),
+    poolLocks,
+  };
+}
+
 // ---------- Teams (SPEC F2) ----------
 
 export type TeamIssue = 'empty' | 'too-long' | 'duplicate' | 'too-many';
@@ -153,6 +189,33 @@ export function addTeams(draft: Draft, text: string, newId: IdFactory): AddTeams
     }
   }
   return { draft: { ...draft, teams }, added: teams.length - draft.teams.length, rejected };
+}
+
+/** Room left for teams in this tournament. */
+export function freeTeamSlots(draft: Draft): number {
+  return Math.max(0, LIMITS.maxTeams - draft.teams.length);
+}
+
+/**
+ * Fictional teams (SPEC F2): `add` keeps the current teams, `replace` starts from an
+ * empty list (the caller confirms first). Never saved to the library.
+ */
+export function generateTeams(
+  draft: Draft,
+  count: number,
+  mode: 'add' | 'replace',
+  seed: number,
+  newId: IdFactory,
+): AddTeamsResult {
+  const base: Draft =
+    mode === 'replace' ? { ...draft, teams: [], poolLocks: {}, withdrawn: [] } : draft;
+  const wanted = Math.min(Math.max(0, Math.floor(count)), freeTeamSlots(base));
+  const names = fictionalTeamNames(
+    wanted,
+    base.teams.map((t) => t.name),
+    seed,
+  );
+  return addTeams(base, names.join('\n'), newId);
 }
 
 export function teamNameIssue(
