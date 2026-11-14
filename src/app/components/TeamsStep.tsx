@@ -50,6 +50,7 @@ export function TeamsStep({ draft, update }: StepProps) {
   const save = (names: string[]) => {
     const result = saveToLibrary(library, names, newId);
     updateLibrary(() => result.library);
+    setReport(null);
     setSaved(fr.teams.savedReport(result.added.length));
   };
 
