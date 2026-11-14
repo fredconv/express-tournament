@@ -18,6 +18,7 @@ import {
   poolStandings,
   type Results,
 } from '../../domain/standings';
+import { fictionalTeamNames } from '../../domain/teamNames';
 import { isValidTime, parseTime } from '../../domain/time';
 import type {
   MatchFormat,
@@ -153,6 +154,33 @@ export function addTeams(draft: Draft, text: string, newId: IdFactory): AddTeams
     }
   }
   return { draft: { ...draft, teams }, added: teams.length - draft.teams.length, rejected };
+}
+
+/** Room left for teams in this tournament. */
+export function freeTeamSlots(draft: Draft): number {
+  return Math.max(0, LIMITS.maxTeams - draft.teams.length);
+}
+
+/**
+ * Fictional teams (SPEC F2): `add` keeps the current teams, `replace` starts from an
+ * empty list (the caller confirms first). Never saved to the library.
+ */
+export function generateTeams(
+  draft: Draft,
+  count: number,
+  mode: 'add' | 'replace',
+  seed: number,
+  newId: IdFactory,
+): AddTeamsResult {
+  const base: Draft =
+    mode === 'replace' ? { ...draft, teams: [], poolLocks: {}, withdrawn: [] } : draft;
+  const wanted = Math.min(Math.max(0, Math.floor(count)), freeTeamSlots(base));
+  const names = fictionalTeamNames(
+    wanted,
+    base.teams.map((t) => t.name),
+    seed,
+  );
+  return addTeams(base, names.join('\n'), newId);
 }
 
 export function teamNameIssue(
