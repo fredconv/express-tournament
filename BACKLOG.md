@@ -44,6 +44,9 @@ Priorité indicative : **P1** = première itération après V1, **P2** = ensuite
 | A23 | Gérer depuis un autre appareil, suppression, purge automatique à 90 jours | P1 | Reporté du MVP (D4, D6). |
 | A24 | Tests E2E Playwright et audit Lighthouse | P2 | Reporté du MVP. |
 | A25 | Estimation de l'heure de fin de journée dès la configuration | P2 | |
+| A26 | Bibliothèque d'équipes partagée entre appareils (PC et téléphone) : nécessite un compte ou un code de bibliothèque côté serveur | P2 | ADR-13. |
+| A27 | Filtre par terrain combiné au filtre par équipe | P1 | Demandé le 2026-11-14, prochaine PR dédiée. |
+| A28 | Planning PDF par terrain (à afficher à côté du terrain) | P3 | Idée de l'utilisateur, hors périmètre actuel. |
 | A19 | ~~Optimiseur de repos plus fort~~ : séries de 3+ supprimées par ADR-12 (2026-11-13). Reste possible : recherche locale pour réduire encore les doubles ou la durée sur les grands tournois. | P3 | ADR-12. |
 
 ## Dette technique / qualité
