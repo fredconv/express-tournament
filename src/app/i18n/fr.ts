@@ -140,6 +140,22 @@ export const fr = {
     legendConsecutive:
       'deux créneaux de suite sans repos : en orange sur le premier match, en rouge sur le second (information, pas une erreur ; jamais trois de suite)',
   },
+  legend: {
+    button: 'Légende',
+    title: 'Légende du planning',
+    close: 'Fermer la légende',
+    backToBack: 'Enchaînement des matchs',
+    next: 'L’équipe joue un autre match juste après celui-ci, sans créneau de repos. L’heure et le terrain du match suivant sont indiqués.',
+    previous:
+      'L’équipe sort d’un match au créneau précédent : c’est son deuxième match de suite (jamais trois). Information, pas une erreur.',
+    matches: 'Identification des matchs',
+    courts: 'Chaque terrain a sa couleur, toujours accompagnée de son nom.',
+    teamSample: 'Équipe',
+    selected: 'Surligné : l’équipe choisie dans « Afficher ».',
+    winner: 'Gras souligné : l’équipe qui a gagné le match.',
+    forfeitSample: 'forfait de …',
+    forfeit: 'Match non joué : l’équipe nommée a déclaré forfait.',
+  },
   score: {
     enter: 'Saisir le score',
     edit: 'Modifier',

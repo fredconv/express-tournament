@@ -850,33 +850,97 @@ a.button {
   outline-offset: 2px;
 }
 
+.team-filter__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.team-filter__bar .field {
+  flex: 1 1 14rem;
+}
+
+.legend-button {
+  flex: 0 0 auto;
+}
+
+/* Popover: centered small window, also on phones; nothing rendered while closed. */
 .legend {
-  display: grid;
-  gap: 0.35rem;
-  padding: 0.6rem 0.75rem;
+  width: min(28rem, calc(100vw - 2rem));
+  max-height: min(80vh, 36rem);
+  overflow: auto;
+  padding: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.2);
 }
 
-.legend p {
-  margin: 0;
+.legend::backdrop {
+  background: rgb(0 0 0 / 0.25);
+}
+
+.legend__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0.25rem 0.25rem 0.75rem;
 }
 
 .legend__title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.legend__section {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.6rem 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.legend__heading {
+  margin: 0;
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--color-muted);
 }
 
-.legend__items {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.6rem;
+.legend__list {
+  display: grid;
+  gap: 0.5rem;
   margin: 0;
-  padding: 0;
-  list-style: none;
+}
+
+.legend__row {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) 1fr;
+  gap: 0.25rem 0.6rem;
+  align-items: baseline;
+}
+
+.legend__row dt,
+.legend__row dd {
+  margin: 0;
+}
+
+.legend__row dd {
+  font-size: 0.85rem;
+}
+
+.legend__samples {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+@media (max-width: 30rem) {
+  .legend__row {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Print / PDF (SPEC F7): A4 portrait, grid layout, no interface controls */
