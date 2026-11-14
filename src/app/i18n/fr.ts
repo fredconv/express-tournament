@@ -147,8 +147,10 @@ export const fr = {
     confirmReset: 'Les scores déjà saisis et l’après-midi seront effacés. Continuer ?',
     stale: 'Les équipes ou les réglages ont changé : régénérez le matin.',
     blocked: 'Pour générer le planning :',
-    filter: 'Afficher',
+    teamFilter: 'Équipe',
     allTeams: 'Toutes les équipes',
+    courtFilter: 'Terrain',
+    allCourts: 'Tous les terrains',
     match: (n: number) => `Match ${n}`,
     vs: 'contre',
     time: 'Heure',
@@ -177,16 +179,20 @@ export const fr = {
     b2bPrevious: 'Vient de jouer',
     b2bWhere: (time: string, court: string) => `à ${time} (${court})`,
     b2bJump: 'Aller à ce match',
-    filtered: (name: string, n: number) =>
-      `Planning filtré : ${name} · ${n} match${n > 1 ? 's' : ''}`,
-    showAll: 'Toutes les équipes',
+    filtered: (parts: readonly string[], n: number) =>
+      `Planning filtré : ${parts.join(' + ')} · ${n} match${n > 1 ? 's' : ''}`,
+    showAll: 'Tout afficher',
     withdraw: 'Équipe partie : forfait sur ses matchs restants',
     confirmWithdraw: (name: string) =>
       `${name} quitte le tournoi : tous ses matchs sans score deviennent des forfaits, et elle ne sera pas placée dans les phases suivantes. Continuer ?`,
     withdrawn: 'Équipe retirée du tournoi',
     reinstate: 'Réintégrer l’équipe',
     withdrawnSuffix: ' (retirée)',
-    noMatchForTeam: 'Aucun match de cette équipe dans cette phase.',
+    noMatch: {
+      team: 'Aucun match de cette équipe dans cette phase.',
+      court: 'Aucun match sur ce terrain dans cette phase.',
+      both: 'Aucun match de cette équipe sur ce terrain dans cette phase.',
+    },
     legend: 'Légende',
     legendConsecutive:
       'deux créneaux de suite sans repos : en orange sur le premier match, en rouge sur le second (information, pas une erreur ; jamais trois de suite)',

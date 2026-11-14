@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { newSeed } from '../../client/ids';
+import { NO_FILTER, type PlanningFilter, sanitizeFilter } from '../../domain/filter';
 import type { ScheduledMatch } from '../../domain/types';
 import {
   blockingIssues,
@@ -21,17 +22,22 @@ import {
   withdrawTeam,
 } from '../draft/model';
 import { fr } from '../i18n/fr';
-import { Champion, DaySummary, PhaseSection, TeamFilter, teamNameOf } from './DayView';
+import { Champion, DaySummary, PhaseSection, ScheduleFilter, teamNameOf } from './DayView';
 import { ScoreForm } from './ScoreForm';
 import type { StepProps } from './stepProps';
 
 /** The tournament day: morning pools, scores, afternoon and final (SPEC F10–F12). */
 export function PlanningStep({ draft, update }: StepProps) {
-  const [teamId, setTeamId] = useState<string | null>(null);
+  const [rawFilter, setFilter] = useState<PlanningFilter>(NO_FILTER);
   const [editing, setEditing] = useState<string | null>(null);
   const blocking = blockingIssues(draft);
   const stale = isScheduleStale(draft);
-  const selectedTeam = draft.teams.some((t) => t.id === teamId) ? teamId : null;
+  const filter = sanitizeFilter(
+    rawFilter,
+    draft.teams.map((t) => t.id),
+    draft.courts.map((c) => c.id),
+  );
+  const selectedTeam = filter.teamId;
   const teamName = teamNameOf(draft);
 
   const confirmReset = () => !hasResults(draft) || window.confirm(fr.planning.confirmReset);
@@ -67,7 +73,7 @@ export function PlanningStep({ draft, update }: StepProps) {
       </button>
     );
 
-  const phaseProps = { draft, teamId: selectedTeam, renderScore };
+  const phaseProps = { draft, filter, onFilterChange: setFilter, renderScore };
   const morning = draft.schedule;
   const afternoonStale = isAfternoonStale(draft);
 
@@ -101,10 +107,10 @@ export function PlanningStep({ draft, update }: StepProps) {
           <PhaseSection
             {...phaseProps}
             beforeSchedule={
-              <TeamFilter
+              <ScheduleFilter
                 draft={draft}
-                teamId={selectedTeam}
-                onChange={setTeamId}
+                filter={filter}
+                onChange={setFilter}
                 teamActions={
                   selectedTeam && (
                     <WithdrawAction draft={draft} update={update} teamId={selectedTeam} />

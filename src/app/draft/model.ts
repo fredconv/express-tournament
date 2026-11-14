@@ -1,4 +1,5 @@
 import { defaultCourtColor, isCourtColor } from '../../domain/courtColors';
+import { filterMatches, type PlanningFilter } from '../../domain/filter';
 import { suggestSlotMinutes } from '../../domain/format';
 import { LIMITS } from '../../domain/limits';
 import { normalizeName } from '../../domain/names';
@@ -412,6 +413,11 @@ export function dayMatches(draft: Draft): ScheduledMatch[] {
 /** Matches shown when the schedule is filtered on one team (SPEC F6). */
 export function teamMatchCount(draft: Draft, teamId: string): number {
   return dayMatches(draft).filter((m) => m.teamAId === teamId || m.teamBId === teamId).length;
+}
+
+/** Matches of the whole day left visible by the team and court filter (SPEC F6). */
+export function filteredMatchCount(draft: Draft, filter: PlanningFilter): number {
+  return filterMatches(dayMatches(draft), filter).length;
 }
 
 export function hasResults(draft: Draft): boolean {

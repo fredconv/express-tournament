@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { getTournament, type PublishedTournament } from '../../client/api';
 import { deviceStore } from '../../client/storage';
-import { Champion, DaySummary, PhaseSection, TeamFilter } from '../components/DayView';
+import { type PlanningFilter, sanitizeFilter } from '../../domain/filter';
+import { Champion, DaySummary, PhaseSection, ScheduleFilter } from '../components/DayView';
 import { fromDoc } from '../draft/publish';
 import { fr } from '../i18n/fr';
 
@@ -16,6 +17,7 @@ export function PublicPage() {
   const { id = '' } = useParams();
   const [state, setState] = useState<State>({ kind: 'loading' });
   const [teamId, setTeamId] = useState<string | null>(() => deviceStore.myTeam(id) || null);
+  const [courtId, setCourtId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const result = await getTournament(id);
@@ -38,10 +40,16 @@ export function PublicPage() {
 
   const { doc, updatedAt } = state.data;
   const draft = fromDoc(doc);
-  const selected = draft.teams.some((t) => t.id === teamId) ? teamId : null;
-  const chooseTeam = (next: string | null) => {
-    setTeamId(next);
-    deviceStore.saveMyTeam(id, next);
+  const filter = sanitizeFilter(
+    { teamId, courtId },
+    draft.teams.map((t) => t.id),
+    draft.courts.map((c) => c.id),
+  );
+  // The team is remembered on this device ("my team"), the court is not.
+  const changeFilter = (next: PlanningFilter) => {
+    if (next.teamId !== filter.teamId) deviceStore.saveMyTeam(id, next.teamId);
+    setTeamId(next.teamId);
+    setCourtId(next.courtId);
   };
   const updated = new Date(updatedAt).toLocaleTimeString('fr-FR', {
     hour: '2-digit',
@@ -52,9 +60,9 @@ export function PublicPage() {
     day: 'numeric',
     month: 'long',
   });
-  const phaseProps = { draft, teamId: selected };
+  const phaseProps = { draft, filter, onFilterChange: changeFilter };
   // One selector, above the first schedule shown (latest phase first).
-  const filter = <TeamFilter draft={draft} teamId={selected} onChange={chooseTeam} />;
+  const filterBar = <ScheduleFilter draft={draft} filter={filter} onChange={changeFilter} />;
 
   return (
     <main className="page page--public">
@@ -80,7 +88,7 @@ export function PublicPage() {
       {draft.final && (
         <PhaseSection
           {...phaseProps}
-          beforeSchedule={filter}
+          beforeSchedule={filterBar}
           title={fr.planning.final}
           pools={[]}
           schedule={draft.final.schedule}
@@ -89,7 +97,7 @@ export function PublicPage() {
       {draft.afternoon && (
         <PhaseSection
           {...phaseProps}
-          beforeSchedule={draft.final ? null : filter}
+          beforeSchedule={draft.final ? null : filterBar}
           title={fr.planning.afternoon}
           pools={draft.afternoon.pools}
           schedule={draft.afternoon.schedule}
@@ -98,7 +106,7 @@ export function PublicPage() {
       {draft.schedule && (
         <PhaseSection
           {...phaseProps}
-          beforeSchedule={draft.final || draft.afternoon ? null : filter}
+          beforeSchedule={draft.final || draft.afternoon ? null : filterBar}
           title={fr.planning.morning}
           pools={draft.pools}
           schedule={draft.schedule}
