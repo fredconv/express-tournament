@@ -1,7 +1,17 @@
 # Tournoi Express
 
 Organiser un tournoi de volley en quelques minutes et partager le planning par QR code.
-Application web installable (PWA) : React + Vite, API Hono sur Cloudflare Workers, base Cloudflare D1.
+Application web : React + Vite, API Hono sur Cloudflare Workers, base Cloudflare D1.
+
+Production : https://express-tournament.fredconv.workers.dev
+
+## Ce que fait l'application (V1)
+
+- **Préparer** (sur l'appareil de l'organisateur, sans compte) : équipes saisies, collées, générées ou reprises de la bibliothèque d'équipes ; 1 à 6 terrains ; format des matchs ; horaires et pause de midi ; duplication d'un tournoi pour une nouvelle édition.
+- **Jouer la journée** : tirage des poules du matin (3 à 5 équipes, verrouillage possible), planning sans trois matchs d'affilée, saisie des scores, forfaits et équipe partie, poules de niveau l'après-midi selon le classement, finale.
+- **Partager** : publication en un clic, page publique `/t/<id>` lisible sans compte, QR code, impression A4 / PDF, filtres par équipe et par terrain.
+
+Parcours détaillés et critères d'acceptation : [SPEC.md](SPEC.md).
 
 Documents de référence : [SPEC.md](SPEC.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [ROADMAP.md](ROADMAP.md) · [BACKLOG.md](BACKLOG.md) · [AGENTS.md](AGENTS.md)
 
@@ -56,3 +66,15 @@ npm run db:migrate:remote    # base de production
 ```
 
 Une migration doit être **rétrocompatible** (ajouts uniquement) et appliquée à la prévisualisation puis à la production **avant** de fusionner le code qui en dépend. `wrangler.preview-db.jsonc` ne sert qu'à migrer la base de prévisualisation ; garder son `database_id` synchronisé avec le bloc `previews` de `wrangler.jsonc`.
+
+## Limites connues (V1)
+
+- **Gestion depuis un seul appareil** : le code de gestion d'un tournoi publié reste dans le navigateur qui l'a publié. Vider les données du site ou changer d'appareil empêche de le modifier (la page publique reste consultable).
+- **Brouillons et bibliothèque d'équipes locaux** : stockés dans le navigateur, non synchronisés entre PC et téléphone (BACKLOG A26).
+- **Connexion nécessaire** : pas de mode hors ligne (PWA au BACKLOG) ; la page publique affiche la dernière version chargée si une actualisation échoue.
+- **Pas de suppression** d'un tournoi publié ni de purge automatique.
+- **Phases fixes** : poules du matin, poules de niveau l'après-midi, finale entre les deux premiers de la poule Or ; pas de demi-finales.
+- **Tests de bout en bout** (Playwright) non automatisés ; recettes sur vrai téléphone (QR, PDF Android) suivies dans `HANDOFF.md`.
+- Les brouillons créés avant l'étape E3 ne sont plus lus.
+
+Coût : 0 € (offres gratuites Workers et D1, sous-domaine `workers.dev`).

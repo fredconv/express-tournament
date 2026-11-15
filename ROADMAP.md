@@ -103,7 +103,7 @@ Demandée par l'utilisateur le 2026-11-13 (SPEC F13). Aucune règle du moteur mo
 **DoD de publication finale (V1)**
 - [ ] DoD E0 à E4 cochées (sauf RM explicitement reportées et notées dans `HANDOFF.md`).
 - [ ] Un tournoi créé en production est consultable via QR depuis un téléphone qui n'a jamais ouvert l'app.
-- [ ] README : démarrage local, déploiement, limites connues.
+- [x] README : démarrage local, déploiement, limites connues.
 - [ ] Tag Git `v1.0.0`.
 - [ ] Coût mensuel constaté = 0 €.
 
