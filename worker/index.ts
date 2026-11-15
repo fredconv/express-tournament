@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { securityHeaders } from './securityHeaders';
-import { tournaments } from './tournaments';
+import { simulationAllowed, tournaments } from './tournaments';
 
 export const app = new Hono<{ Bindings: Env }>().basePath('/api');
 
@@ -12,6 +12,9 @@ app.get('/health', async (c) => {
     ? c.json({ status: 'ok', db: 'ok' })
     : c.json({ status: 'degraded', db: 'unavailable' }, 503);
 });
+
+/** Public, read-only switches for the client UI; every write is still checked on the server. */
+app.get('/config', (c) => c.json({ simulation: simulationAllowed(c.env) }));
 
 app.route('/tournaments', tournaments);
 

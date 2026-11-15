@@ -68,6 +68,11 @@ export function PublicPage() {
     <main className="page page--public">
       <header className="public-header">
         <h1>{doc.name}</h1>
+        {doc.test && (
+          <p className="notice notice--warning" role="note">
+            {fr.test.publicBanner}
+          </p>
+        )}
         <p className="muted">
           {date}
           {doc.location && ` · ${doc.location}`}

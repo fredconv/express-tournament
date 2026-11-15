@@ -77,6 +77,10 @@ export interface Draft {
   withdrawn?: string[] | undefined;
   /** Set once published: public id, server version and fingerprint of what was sent. */
   publication: Publication | null;
+  /** Test tournament (SPEC F15): the only kind the simulator may fill. Never set afterwards. */
+  test?: true | undefined;
+  /** Matches whose result came from the simulator; a manual edit removes the id. */
+  simulated?: string[] | undefined;
   updatedAt: string;
 }
 
@@ -160,6 +164,8 @@ export function duplicateDraft(
     courts: source.courts.map((c) => ({ ...c, id: newId('c') })),
     teams: source.teams.map((t) => ({ id: teamIds.get(t.id) as string, name: t.name })),
     poolLocks,
+    // A copy of a test tournament stays a test; a real one never becomes one.
+    ...(source.test ? { test: true as const } : {}),
   };
 }
 
@@ -439,13 +445,20 @@ export function setResult(draft: Draft, matchId: string, sets: SetScore[] | null
     if (scoreIssue(sets, draft.matchFormat, isFinalMatch(draft, matchId)) !== null) return draft;
     results[matchId] = sets;
   }
-  return { ...draft, results };
+  return manual({ ...draft, results }, matchId);
+}
+
+/** A result typed by the organizer is no longer a simulated one (never reset by the simulator). */
+function manual(draft: Draft, matchId: string): Draft {
+  if (!draft.simulated?.includes(matchId)) return draft;
+  return { ...draft, simulated: draft.simulated.filter((id) => id !== matchId) };
 }
 
 /** Forfeit by one side of a match (`null` clears the result). */
 export function setForfeit(draft: Draft, matchId: string, side: 'a' | 'b' | null): Draft {
   if (side === null) return setResult(draft, matchId, null);
-  return { ...draft, results: { ...draft.results, [matchId]: forfeitBy(side, draft.matchFormat) } };
+  const results = { ...draft.results, [matchId]: forfeitBy(side, draft.matchFormat) };
+  return manual({ ...draft, results }, matchId);
 }
 
 export function withdrawnOf(draft: Draft): readonly string[] {

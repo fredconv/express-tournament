@@ -24,6 +24,7 @@ import {
 import { fr } from '../i18n/fr';
 import { Champion, DaySummary, PhaseSection, ScheduleFilter, teamNameOf } from './DayView';
 import { ScoreForm } from './ScoreForm';
+import { SimulationPanel } from './SimulationPanel';
 import type { StepProps } from './stepProps';
 
 /** The tournament day: morning pools, scores, afternoon and final (SPEC F10–F12). */
@@ -79,6 +80,7 @@ export function PlanningStep({ draft, update }: StepProps) {
 
   return (
     <div className="form">
+      <SimulationPanel draft={draft} update={update} />
       {blocking.length > 0 ? (
         <div className="notice notice--warning">
           <p>{fr.planning.blocked}</p>

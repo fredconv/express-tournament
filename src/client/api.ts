@@ -3,7 +3,14 @@ import type { TournamentDoc } from '../domain/schemas';
 // Only module that calls /api (AGENTS.md §4). The management code travels in the
 // Authorization header, never in a URL.
 
-export type ApiError = 'network' | 'conflict' | 'unauthorized' | 'not-found' | 'invalid' | 'server';
+export type ApiError =
+  | 'network'
+  | 'conflict'
+  | 'unauthorized'
+  | 'forbidden'
+  | 'not-found'
+  | 'invalid'
+  | 'server';
 
 export type ApiResult<T> = { ok: true; value: T } | { ok: false; error: ApiError };
 
@@ -33,6 +40,12 @@ export function updateTournament(id: string, code: string, version: number, doc:
   });
 }
 
+/** Switches of this deployment (SPEC F15); only shows or hides UI, the server decides. */
+export async function getConfig(): Promise<{ simulation: boolean }> {
+  const result = await call<{ simulation?: unknown }>('/api/config', { cache: 'no-store' });
+  return { simulation: result.ok && result.value.simulation === true };
+}
+
 export function getTournament(id: string) {
   return call<PublishedTournament>(`/api/tournaments/${encodeURIComponent(id)}`, {
     cache: 'no-store',
@@ -53,6 +66,7 @@ async function call<T>(url: string, init: RequestInit): Promise<ApiResult<T>> {
 function errorOf(status: number): ApiError {
   if (status === 409) return 'conflict';
   if (status === 401) return 'unauthorized';
+  if (status === 403) return 'forbidden';
   if (status === 404) return 'not-found';
   if (status === 413 || status === 422 || status === 428) return 'invalid';
   return 'server';

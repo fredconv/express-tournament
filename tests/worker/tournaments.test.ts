@@ -20,9 +20,9 @@ function sampleDoc(): TournamentDoc {
   );
 }
 
-let env: { DB: D1Database };
+let env: { DB: D1Database; SIMULATION: string };
 beforeEach(() => {
-  env = { DB: sqliteD1() };
+  env = { DB: sqliteD1(), SIMULATION: 'off' };
 });
 
 const json = (body: unknown, headers: Record<string, string> = {}) => ({
@@ -144,5 +144,52 @@ describe('PUT /api/tournaments/:id', () => {
     expect((await app.request(url, invalid, env)).status).toBe(422);
     const missing = put(sampleDoc(), { ...auth, 'If-Match': '1' });
     expect((await app.request('/api/tournaments/abcdefghjk', missing, env)).status).toBe(404);
+  });
+});
+
+describe('test tournaments (SPEC F15)', () => {
+  const testDoc = (): TournamentDoc => ({ ...sampleDoc(), test: true });
+
+  it('GET /api/config tells the client whether simulation is allowed', async () => {
+    expect(await (await app.request('/api/config', {}, env)).json()).toEqual({ simulation: false });
+    env.SIMULATION = 'on';
+    expect(await (await app.request('/api/config', {}, env)).json()).toEqual({ simulation: true });
+  });
+
+  it('refuses test tournaments where simulation is off (production)', async () => {
+    const { res, body } = await create(testDoc());
+    expect(res.status).toBe(403);
+    expect(body).toEqual({ error: 'test_disabled' });
+    expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM tournaments').bind().first()).toEqual({
+      n: 0,
+    });
+  });
+
+  it('accepts them where simulation is on (previews)', async () => {
+    env.SIMULATION = 'on';
+    const { res, body } = await create(testDoc());
+    expect(res.status).toBe(201);
+    const read = await app.request(`/api/tournaments/${body.id}`, {}, env);
+    expect(await read.json()).toMatchObject({ doc: { test: true } });
+  });
+
+  it('never turns a real tournament into a test one, or the other way round', async () => {
+    env.SIMULATION = 'on';
+    const real = await create();
+    const test = await create(testDoc());
+    const auth = (token: string) => ({ Authorization: `Bearer ${token}`, 'If-Match': '1' });
+    const toTest = put(testDoc(), auth(real.body.ownerToken));
+    expect((await app.request(`/api/tournaments/${real.body.id}`, toTest, env)).status).toBe(422);
+    const toReal = put(sampleDoc(), auth(test.body.ownerToken));
+    expect((await app.request(`/api/tournaments/${test.body.id}`, toReal, env)).status).toBe(422);
+  });
+
+  it('refuses updates of a test tournament once simulation is off', async () => {
+    env.SIMULATION = 'on';
+    const { body } = await create(testDoc());
+    env.SIMULATION = 'off';
+    const auth = { Authorization: `Bearer ${body.ownerToken}`, 'If-Match': '1' };
+    const res = await app.request(`/api/tournaments/${body.id}`, put(testDoc(), auth), env);
+    expect(res.status).toBe(403);
   });
 });
