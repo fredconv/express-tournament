@@ -6,26 +6,23 @@ interface BackToBackBadgeProps {
   link: BackToBackLink;
   teamName: string;
   courtName: string;
+  onJump: () => void;
 }
 
 /**
  * One team, one back-to-back (SPEC F13). Two variants of the same badge:
  * orange "plays again right after" on the first match, red "just played" on the second.
- * Time and court of the other match are a button that scrolls to it.
+ * Time and court of the other match are a button that scrolls to it, loosening the
+ * planning filter first when it hides that match.
  */
-export function BackToBackBadge({ link, teamName, courtName }: BackToBackBadgeProps) {
+export function BackToBackBadge({ link, teamName, courtName, onJump }: BackToBackBadgeProps) {
   return (
     <span className={b2bClassName(link.direction)}>
       <B2bIcon direction={link.direction} />
       <strong>{teamName}</strong>
       {' · '}
       {b2bLabel(link.direction)}{' '}
-      <button
-        type="button"
-        className="b2b__jump"
-        title={fr.planning.b2bJump}
-        onClick={() => scrollToMatch(link.other.id)}
-      >
+      <button type="button" className="b2b__jump" title={fr.planning.b2bJump} onClick={onJump}>
         {fr.planning.b2bWhere(formatTime(link.other.startMinute), courtName)}
       </button>
     </span>
@@ -55,7 +52,7 @@ export function BackToBackSample({ direction }: { direction: Direction }) {
 }
 
 /** Scrolls to the visible card or grid cell of a match (list on mobile, grid on desktop). */
-function scrollToMatch(matchId: string): void {
+export function scrollToMatch(matchId: string): void {
   const target = [...document.querySelectorAll<HTMLElement>(`[data-match-id="${matchId}"]`)].find(
     (element) => element.offsetParent !== null,
   );

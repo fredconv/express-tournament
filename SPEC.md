@@ -188,11 +188,13 @@ _Moteur existant (E1) conservé tel quel ; aucune optimisation supplémentaire e
 - PC : grille créneaux × terrains.
 - Scores saisis et classements des poules.
 - Filtre « Mon équipe » mémorisé sur l'appareil (page publique) : seuls ses matchs sont affichés, avec leur nombre et un retour « Toutes les équipes » ; l'impression reprend la vue filtrée.
+- Filtre « Terrain » (éditeur et page publique, demandé le 2026-11-14), combiné au filtre équipe (ET) : liste les terrains du tournoi, affiché à partir de deux terrains ; sur PC la grille ne montre que la colonne du terrain choisi. Un seul bouton « Tout afficher » réinitialise les deux ; le bandeau indique les critères actifs et le nombre de matchs ; message explicite si aucun match ne correspond dans une phase. Les enchaînements restent calculés sur le planning complet ; un lien vers un match masqué par le filtre l'élargit au minimum (terrain d'abord, tout sinon) puis s'y rend. Le terrain n'est pas mémorisé sur l'appareil.
 - Date de dernière mise à jour ; bouton « Actualiser ».
 
 **Critères d'acceptation**
 - [ ] CA6.1 (RM, viewport 360 × 800) Le planning d'un tournoi de 12 équipes s'affiche sans défilement horizontal.
 - [x] CA6.2 (TA) Le filtre équipe est conservé après rechargement.
+- [x] CA6.4 (TA) Filtres terrain seul, équipe seule et combinés ; aucun match ; enchaînements conservés ; élargissement minimal vers un match masqué ; terrain ou équipe disparus ignorés.
 - [ ] CA6.3 (RM) Sur Android (Chrome) en 4G simulée, planning lisible < 3 s après ouverture du lien.
 
 ### F7 — Export PDF imprimable

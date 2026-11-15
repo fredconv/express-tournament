@@ -1,11 +1,12 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { courtColor, textColorOn } from '../../domain/courtColors';
+import { filterMatches, isFiltered, NO_FILTER, type PlanningFilter } from '../../domain/filter';
 import { outcome } from '../../domain/scores';
 import { poolStandings } from '../../domain/standings';
 import { formatTime } from '../../domain/time';
 import type { PoolInput, ScheduledMatch, ScheduleResult } from '../../domain/types';
 import { describeFormat } from '../draft/labels';
-import { type Draft, exceedsTargetEnd, teamMatchCount } from '../draft/model';
+import { type Draft, exceedsTargetEnd, filteredMatchCount } from '../draft/model';
 import { fr } from '../i18n/fr';
 import { BackToBackSample } from './BackToBackBadge';
 import { ScheduleView } from './ScheduleView';
@@ -15,14 +16,17 @@ import { StandingsTable } from './StandingsTable';
 
 export interface PhaseProps {
   draft: Draft;
-  teamId: string | null;
+  filter: PlanningFilter;
+  /** Lets a back-to-back link loosen the filter to show a hidden match. */
+  onFilterChange: (filter: PlanningFilter) => void;
   /** Editor only: score entry under each match. */
   renderScore?: (m: ScheduledMatch) => ReactNode;
 }
 
 export function PhaseSection({
   draft,
-  teamId,
+  filter,
+  onFilterChange,
   renderScore,
   title,
   pools,
@@ -32,7 +36,7 @@ export function PhaseSection({
   title: string;
   pools: readonly PoolInput[];
   schedule: ScheduleResult;
-  /** Controls acting on the schedule (team filter), placed right above the first slot. */
+  /** Controls acting on the schedule (filter), placed right above the first slot. */
   beforeSchedule?: ReactNode;
 }) {
   const poolLabel = poolLabelOf(draft);
@@ -57,20 +61,21 @@ export function PhaseSection({
               title={poolLabel(pool.id)}
               rows={poolStandings(pool, schedule.matches, draft.results)}
               teamName={teamNameOf(draft)}
-              teamId={teamId}
+              teamId={filter.teamId}
             />
           ))}
         </div>
       )}
       {beforeSchedule}
-      {teamId && !schedule.matches.some((m) => m.teamAId === teamId || m.teamBId === teamId) && (
-        <p className="muted small">{fr.planning.noMatchForTeam}</p>
+      {isFiltered(filter) && filterMatches(schedule.matches, filter).length === 0 && (
+        <p className="muted small">{fr.planning.noMatch[noMatchKind(filter)]}</p>
       )}
       <ScheduleView
         matches={schedule.matches}
         teams={draft.teams}
         courts={draft.courts}
-        teamId={teamId}
+        filter={filter}
+        onFilterChange={onFilterChange}
         results={draft.results}
         poolLabel={poolLabel}
         {...(renderScore ? { renderScore } : {})}
@@ -97,54 +102,84 @@ export function DaySummary({ draft }: { draft: Draft }) {
   );
 }
 
+function noMatchKind(filter: PlanningFilter): 'team' | 'court' | 'both' {
+  if (filter.teamId && filter.courtId) return 'both';
+  return filter.teamId ? 'team' : 'court';
+}
+
 /**
- * The single team selector (SPEC F6): only the selected team's matches are shown,
- * the others are hidden (not deleted). Shared by the editor and the public page.
+ * Planning filter (SPEC F6): a team and a court, combined (AND). Hidden matches are
+ * only hidden, never deleted. Shared by the editor and the public page. The court
+ * selector lists the tournament's courts and only appears with two courts or more.
  */
-export function TeamFilter({
+export function ScheduleFilter({
   draft,
-  teamId,
+  filter,
   onChange,
   teamActions,
 }: {
   draft: Draft;
-  teamId: string | null;
-  onChange: (teamId: string | null) => void;
+  filter: PlanningFilter;
+  onChange: (filter: PlanningFilter) => void;
   /** Editor only: actions on the selected team (withdrawal). */
   teamActions?: ReactNode;
 }) {
+  const teamName = teamNameOf(draft);
+  const courtName = (id: string) => draft.courts.find((c) => c.id === id)?.name ?? '';
+  const parts = [
+    ...(filter.teamId ? [teamName(filter.teamId)] : []),
+    ...(filter.courtId ? [courtName(filter.courtId)] : []),
+  ];
+  const active = (value: string | null) => (value ? ' team-filter__select--active' : '');
   return (
-    <div className={`team-filter${teamId ? ' team-filter--active' : ''}`}>
+    <div className={`team-filter${isFiltered(filter) ? ' team-filter--active' : ''}`}>
       <div className="team-filter__bar">
-        <label className="field no-print">
-          <span className="field__label">{fr.planning.filter}</span>
+        <label className={`field no-print${active(filter.teamId)}`}>
+          <span className="field__label">{fr.planning.teamFilter}</span>
           <select
             className="input"
-            value={teamId ?? ''}
-            onChange={(e) => onChange(e.target.value || null)}
+            value={filter.teamId ?? ''}
+            onChange={(e) => onChange({ ...filter, teamId: e.target.value || null })}
           >
             <option value="">{fr.planning.allTeams}</option>
             {draft.teams.map((t) => (
               <option key={t.id} value={t.id}>
-                {teamNameOf(draft)(t.id)}
+                {teamName(t.id)}
               </option>
             ))}
           </select>
         </label>
+        {draft.courts.length > 1 && (
+          <label className={`field no-print${active(filter.courtId)}`}>
+            <span className="field__label">{fr.planning.courtFilter}</span>
+            <select
+              className="input"
+              value={filter.courtId ?? ''}
+              onChange={(e) => onChange({ ...filter, courtId: e.target.value || null })}
+            >
+              <option value="">{fr.planning.allCourts}</option>
+              {draft.courts.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <Legend draft={draft} />
       </div>
-      {teamId && (
+      {isFiltered(filter) && (
         <p className="team-filter__status" role="status">
           <span>
             <span aria-hidden="true">⏷ </span>
-            {fr.planning.filtered(teamNameOf(draft)(teamId), teamMatchCount(draft, teamId))}
+            {fr.planning.filtered(parts, filteredMatchCount(draft, filter))}
           </span>
-          <button type="button" className="button" onClick={() => onChange(null)}>
+          <button type="button" className="button" onClick={() => onChange(NO_FILTER)}>
             {fr.planning.showAll}
           </button>
         </p>
       )}
-      {teamId && teamActions}
+      {filter.teamId && teamActions}
     </div>
   );
 }

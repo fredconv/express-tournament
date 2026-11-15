@@ -1,20 +1,23 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { backToBackLinks } from '../../domain/consecutive';
 import { courtColor, textColorOn } from '../../domain/courtColors';
+import { filterMatches, isFiltered, type PlanningFilter, revealFilter } from '../../domain/filter';
 import { isForfeit, outcome } from '../../domain/scores';
 import type { Results } from '../../domain/standings';
 import { formatTime } from '../../domain/time';
 import type { ScheduledMatch } from '../../domain/types';
 import type { Court, NamedItem } from '../draft/model';
 import { fr } from '../i18n/fr';
-import { BackToBackBadge } from './BackToBackBadge';
+import { BackToBackBadge, scrollToMatch } from './BackToBackBadge';
 
 interface ScheduleViewProps {
   matches: readonly ScheduledMatch[];
   teams: readonly NamedItem[];
   courts: readonly Court[];
-  /** Show only this team's matches, or everything when null. */
-  teamId: string | null;
+  /** Team and court filter (AND); the selected team is also highlighted. */
+  filter: PlanningFilter;
+  /** Called to loosen the filter when a link points to a hidden match. */
+  onFilterChange: (filter: PlanningFilter) => void;
   results: Results;
   poolLabel: (poolId: string) => string;
   /** Editor only: score entry under each match. Forces the list layout. */
@@ -27,16 +30,24 @@ interface ScheduleViewProps {
  * Court color, back-to-back marker and highlight always come with text.
  */
 export function ScheduleView(props: ScheduleViewProps) {
-  const { matches, teams, courts, teamId, results, poolLabel, renderScore } = props;
+  const { matches, teams, courts, filter, onFilterChange, results, poolLabel, renderScore } = props;
+  const { teamId } = filter;
   const teamName = new Map(teams.map((t) => [t.id, t.name]));
   const name = (id: string) => teamName.get(id) ?? '?';
   const courtIndex = new Map(courts.map((c, i) => [c.id, i]));
-  // Computed on the whole phase so links survive the team filter.
+  // Computed on the whole phase so links survive the filter.
   const links = backToBackLinks(matches);
-  const visible = teamId
-    ? matches.filter((m) => m.teamAId === teamId || m.teamBId === teamId)
-    : matches;
-  const times = groupByStart(visible);
+  const filtered = isFiltered(filter);
+  const times = groupByStart(filterMatches(matches, filter));
+  const shownCourts = filter.courtId ? courts.filter((c) => c.id === filter.courtId) : courts;
+
+  // A link to a match hidden by the filter loosens it first, then scrolls once rendered.
+  const jumpTo = (target: ScheduledMatch) => {
+    const next = revealFilter(target, filter);
+    if (next === filter) return scrollToMatch(target.id);
+    onFilterChange(next);
+    requestAnimationFrame(() => requestAnimationFrame(() => scrollToMatch(target.id)));
+  };
 
   const courtStyle = (courtId: string): CSSProperties => {
     const index = courtIndex.get(courtId) ?? 0;
@@ -77,6 +88,7 @@ export function ScheduleView(props: ScheduleViewProps) {
                 link={link}
                 teamName={name(link.teamId)}
                 courtName={courts[courtIndex.get(link.other.courtId) ?? 0]?.name ?? ''}
+                onJump={() => jumpTo(link.other)}
               />
             ))}
           </span>
@@ -98,8 +110,8 @@ export function ScheduleView(props: ScheduleViewProps) {
           <li key={start} className="schedule-list__slot">
             <h4 className="slot-head">
               <span className="slot-head__time">{formatTime(start)}</span>
-              {/* Filtered: other matches of the slot are hidden, so no misleading count. */}
-              {!teamId && (
+              {/* Filtered: other matches of the slot may be hidden, so no misleading count. */}
+              {!filtered && (
                 <span className="slot-head__count">
                   {fr.planning.simultaneous(timeMatches.length)}
                 </span>
@@ -131,7 +143,7 @@ export function ScheduleView(props: ScheduleViewProps) {
             <thead>
               <tr>
                 <th scope="col">{fr.planning.time}</th>
-                {courts.map((c) => (
+                {shownCourts.map((c) => (
                   <th key={c.id} scope="col">
                     {courtBadge(c.id)}
                   </th>
@@ -144,7 +156,7 @@ export function ScheduleView(props: ScheduleViewProps) {
                   <th scope="row" className="schedule-grid__time">
                     {formatTime(start)}
                   </th>
-                  {courts.map((c) => {
+                  {shownCourts.map((c) => {
                     const m = timeMatches.find((x) => x.courtId === c.id);
                     return m ? (
                       <td
