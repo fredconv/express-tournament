@@ -501,7 +501,34 @@ a {
 
 .team--winner {
   font-weight: 800;
-  text-decoration: underline;
+}
+
+.status-badge {
+  display: inline-block;
+  margin-inline-start: 0.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.status-badge--pending {
+  color: var(--color-muted);
+}
+
+.status-badge--played {
+  color: var(--color-ok);
+}
+
+.status-badge--draw {
+  color: var(--color-text);
+}
+
+.status-badge--forfeit {
+  color: var(--color-error);
 }
 
 .score-link {

@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { backToBackLinks } from '../../domain/consecutive';
 import { courtColor, textColorOn } from '../../domain/courtColors';
 import { filterMatches, isFiltered, type PlanningFilter, revealFilter } from '../../domain/filter';
-import { isForfeit, outcome } from '../../domain/scores';
+import { isForfeit, type MatchStatus, matchStatus, outcome } from '../../domain/scores';
 import type { Results } from '../../domain/standings';
 import { formatTime } from '../../domain/time';
 import type { ScheduledMatch } from '../../domain/types';
@@ -58,7 +58,12 @@ export function ScheduleView(props: ScheduleViewProps) {
     const className = [id === teamId && 'team--highlight', won && 'team--winner']
       .filter(Boolean)
       .join(' ');
-    return <span className={className || undefined}>{name(id)}</span>;
+    return (
+      <span className={className || undefined}>
+        {won && <WinnerMark />}
+        {name(id)}
+      </span>
+    );
   };
 
   const body = (m: ScheduledMatch) => {
@@ -127,6 +132,7 @@ export function ScheduleView(props: ScheduleViewProps) {
                 >
                   <span className="match-card__meta">
                     {courtBadge(m.courtId)} {fr.planning.match(m.number)} · {poolLabel(m.poolId)}
+                    <StatusBadge status={matchStatus(results[m.id])} />
                   </span>
                   {body(m)}
                   {renderScore?.(m)}
@@ -182,6 +188,21 @@ export function ScheduleView(props: ScheduleViewProps) {
       )}
     </>
   );
+}
+
+/** Trophy before the winner's name; the text alternative keeps it readable without the emoji. */
+export function WinnerMark() {
+  return (
+    <>
+      <span aria-hidden="true">🏆 </span>
+      <span className="visually-hidden">{fr.score.winnerLabel} : </span>
+    </>
+  );
+}
+
+/** Match state as text and a muted chip, never color alone (SPEC F11). */
+export function StatusBadge({ status }: { status: MatchStatus }) {
+  return <span className={`status-badge status-badge--${status}`}>{fr.score.status[status]}</span>;
 }
 
 export function formatScore(sets: readonly { a: number; b: number }[]): string {

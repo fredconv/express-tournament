@@ -16,6 +16,7 @@ import {
   isScheduleStale,
   missingScores,
   reinstateTeam,
+  scoresErasedBy,
   setForfeit,
   setResult,
   withdrawnOf,
@@ -44,6 +45,12 @@ export function PlanningStep({ draft, update }: StepProps) {
   const confirmReset = () => !hasResults(draft) || window.confirm(fr.planning.confirmReset);
   const drawMorning = () => {
     if (confirmReset()) update((d) => generate(d, newSeed()));
+  };
+  // Regenerating erases that phase's scores (and the final's): never without consent.
+  const regenerate = (phase: 'afternoon' | 'final') => {
+    const erased = scoresErasedBy(draft, phase);
+    if (erased > 0 && !window.confirm(fr.planning.confirmRegenerate[phase](erased))) return;
+    update(phase === 'afternoon' ? generateAfternoon : generateFinal);
   };
 
   const renderScore = (m: ScheduledMatch) =>
@@ -146,7 +153,7 @@ export function PlanningStep({ draft, update }: StepProps) {
                   <GenerateButton
                     label={fr.planning.regenerateAfternoon}
                     disabled={!canGenerateAfternoon(draft)}
-                    onClick={() => update(generateAfternoon)}
+                    onClick={() => regenerate('afternoon')}
                   />
                 </div>
               )}
@@ -175,7 +182,7 @@ export function PlanningStep({ draft, update }: StepProps) {
               <GenerateButton
                 label={fr.planning.regenerateFinal}
                 disabled={!canGenerateFinal(draft)}
-                onClick={() => update(generateFinal)}
+                onClick={() => regenerate('final')}
               />
             </div>
           )}

@@ -225,6 +225,12 @@ export const fr = {
     generateAfternoon: 'Générer l’après-midi',
     afternoonStale: 'Des scores du matin ont changé : régénérez l’après-midi.',
     regenerateAfternoon: 'Régénérer l’après-midi',
+    confirmRegenerate: {
+      afternoon: (n: number) =>
+        `Régénérer l’après-midi efface ${n} score${n > 1 ? 's' : ''} déjà saisi${n > 1 ? 's' : ''} (après-midi et finale). Continuer ?`,
+      final: (n: number) =>
+        `Régénérer la finale efface ${n === 1 ? 'son score' : `${n} scores`}. Continuer ?`,
+    },
     finalWaiting: 'La finale se génère quand tous les matchs de la poule Or ont un score.',
     generateFinal: 'Générer la finale',
     finalStale: 'Des scores de la poule Or ont changé : régénérez la finale.',
@@ -265,7 +271,8 @@ export const fr = {
     courts: 'Chaque terrain a sa couleur, toujours accompagnée de son nom.',
     teamSample: 'Équipe',
     selected: 'Surligné : l’équipe choisie dans « Afficher ».',
-    winner: 'Gras souligné : l’équipe qui a gagné le match.',
+    winner: 'Gras avec 🏆 : l’équipe qui a gagné le match.',
+    status: 'État du match : à jouer, terminé, nul ou forfait.',
     forfeitSample: 'forfait de …',
     forfeit: 'Match non joué : l’équipe nommée a déclaré forfait.',
   },
@@ -280,6 +287,13 @@ export const fr = {
     forfeitHelp: 'Match non joué (blessure, équipe absente…) :',
     forfeitOf: (name: string) => `Forfait de ${name}`,
     forfeitBy: (name: string) => `forfait de ${name}`,
+    winnerLabel: 'vainqueur',
+    status: {
+      pending: 'À jouer',
+      played: '✓ Terminé',
+      draw: '= Nul',
+      forfeit: 'Forfait',
+    },
     issue: {
       'invalid-points': 'chaque set doit avoir deux scores entre 0 et 99',
       'tied-set': 'un set ne peut pas finir à égalité',
