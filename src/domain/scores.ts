@@ -120,3 +120,12 @@ function bestOfIssue(sets: readonly SetScore[], setCount: number): ScoreIssue | 
   }
   return sets.length === 0 ? 'set-count' : null;
 }
+
+/** Shown on each match (SPEC F11): derived from `outcome`, like the standings. */
+export type MatchStatus = 'pending' | 'played' | 'draw' | 'forfeit';
+
+export function matchStatus(result: MatchResult | undefined): MatchStatus {
+  if (result === undefined) return 'pending';
+  if (isForfeit(result)) return 'forfeit';
+  return outcome(result).winner === null ? 'draw' : 'played';
+}

@@ -430,6 +430,17 @@ export function hasResults(draft: Draft): boolean {
   return Object.keys(draft.results).length > 0;
 }
 
+/**
+ * Scores lost by regenerating a phase: the afternoon also drops the final. The editor
+ * asks for confirmation when this is not zero (never a silent deletion).
+ */
+export function scoresErasedBy(draft: Draft, phase: 'afternoon' | 'final'): number {
+  const prefixes = phase === 'afternoon' ? ['a', 'f'] : ['f'];
+  return (
+    Object.keys(draft.results).length - Object.keys(withoutPhases(draft.results, prefixes)).length
+  );
+}
+
 // ---------- Scores (SPEC F11) ----------
 
 export function isFinalMatch(draft: Draft, matchId: string): boolean {

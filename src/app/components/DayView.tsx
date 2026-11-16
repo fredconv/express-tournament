@@ -9,7 +9,7 @@ import { describeFormat } from '../draft/labels';
 import { type Draft, exceedsTargetEnd, filteredMatchCount } from '../draft/model';
 import { fr } from '../i18n/fr';
 import { BackToBackSample } from './BackToBackBadge';
-import { ScheduleView } from './ScheduleView';
+import { ScheduleView, StatusBadge, WinnerMark } from './ScheduleView';
 import { StandingsTable } from './StandingsTable';
 
 // Read-only pieces of the tournament day, shared by the editor and the public page.
@@ -242,8 +242,18 @@ export function Legend({ draft }: { draft: Draft }) {
         },
         {
           key: 'winner',
-          sample: <span className="team--winner">{fr.legend.teamSample}</span>,
+          sample: (
+            <span className="team--winner">
+              <WinnerMark />
+              {fr.legend.teamSample}
+            </span>
+          ),
           text: fr.legend.winner,
+        },
+        {
+          key: 'status',
+          sample: <StatusBadge status="played" />,
+          text: fr.legend.status,
         },
         {
           key: 'forfeit',
