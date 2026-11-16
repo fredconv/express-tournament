@@ -168,6 +168,19 @@ _Moteur existant (E1) conservé tel quel ; aucune optimisation supplémentaire e
 - [x] CA13.2 (TA) Les enchaînements détectés couvrent les deux matchs et toutes les équipes concernées, et concordent avec les alertes du moteur.
 - [ ] CA13.3 (RM) Planning lisible sur téléphone, ordinateur et PDF (couleur et noir et blanc).
 
+### F15 — Tournois de test et simulation des scores (outil de recette, demandé le 2026-11-15)
+- **Tournoi de test** : créé par « Nouveau tournoi de test (15 équipes) » sur l'accueil, seulement là où le serveur l'autorise (prévisualisations de branche ; jamais en production). Marqué « TEST » dans la liste, l'éditeur et la page publique (« Tournoi de test : résultats fictifs »). Un tournoi réel ne devient jamais un tournoi de test, ni l'inverse ; une copie garde le statut de l'original.
+- **Panneau « Simulation (test) »** (onglet Journée, replié, tournois de test uniquement) : simuler le matin, l'après-midi ou la finale, chacun seulement si la phase existe, est à jour et a des scores manquants ; « Simuler jusqu'à la fin » enchaîne scores du matin → génération normale de l'après-midi → scores → génération normale de la finale → score, et s'arrête sur une phase à régénérer ou bloquée (jamais de régénération automatique, qui effacerait des scores). Résultats « aléatoires réalistes » ou « favoriser les premières équipes de la liste », graine pour rejouer un scénario.
+- Les scores simulés respectent le format (sets gagnants, points du set décisif, set décisif de la finale en cas d'égalité) et passent par la même validation que la saisie manuelle ; classements, après-midi et finale sont ceux de l'application, sans règle parallèle.
+- Seuls les scores manquants sont remplis ; un score simulé corrigé à la main devient manuel. « Effacer les scores simulés » (après confirmation) retire uniquement les scores simulés.
+- Serveur : `GET /api/config` indique si la simulation est permise ; un document `test` est refusé (403) là où elle ne l'est pas, et le statut test ne peut pas changer entre deux versions (422).
+
+**Critères d'acceptation**
+- [x] CA15.1 (TA) Scores simulés valides pour chaque format, finale avec vainqueur, reproductibles avec une graine.
+- [x] CA15.2 (TA) Matin → après-midi → finale par les transitions normales, document publié valide ; arrêt sur phase manquante ou à régénérer.
+- [x] CA15.3 (TA) Aucun effet sur un tournoi réel ; scores manuels jamais écrasés ni effacés.
+- [x] CA15.4 (TA) Serveur : config, refus d'un tournoi de test hors prévisualisation, statut test immuable.
+
 ### F14 — Équipes : génération, bibliothèque et duplication (demandé par l'utilisateur le 2026-11-14)
 - Étape Équipes : trois modes, un à la fois, au-dessus de la liste des équipes inscrites (toujours visible) : **Saisie** (saisie et collage, inchangés), **Générer**, **Réutiliser**.
 - **Générer** : N équipes fictives (128 noms locaux sur le volley, sans réseau ni IA), sans doublon dans le tournoi, dans la limite de 32. Avec des équipes présentes : « Ajouter » ou « Remplacer » (après confirmation). « Nouvelle liste » remplace seulement la dernière génération. Jamais enregistrées automatiquement dans la bibliothèque.

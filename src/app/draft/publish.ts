@@ -49,6 +49,7 @@ export function toDoc(draft: Draft): TournamentDoc {
     final: draft.final ? phase(draft.final.pools, draft.final.schedule) : null,
     results: draft.results,
     ...(withdrawnOf(draft).length > 0 ? { withdrawn: [...withdrawnOf(draft)] } : {}),
+    ...(draft.test ? { test: true as const } : {}),
   };
 }
 
@@ -86,5 +87,6 @@ export function fromDoc(doc: TournamentDoc): Draft {
     final: later(doc.final),
     results: doc.results,
     withdrawn: doc.withdrawn ?? [],
+    ...(doc.test ? { test: true as const } : {}),
   };
 }

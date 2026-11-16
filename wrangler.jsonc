@@ -22,8 +22,11 @@
       "migrations_dir": "migrations"
     }
   ],
+  // Test tournaments and the simulator (SPEC F15, ADR-14): off in production.
+  "vars": { "SIMULATION": "off" },
   // Branch previews (Workers Builds) must never touch production data.
   "previews": {
+    "vars": { "SIMULATION": "on" },
     "d1_databases": [
       {
         "binding": "DB",

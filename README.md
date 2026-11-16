@@ -50,6 +50,10 @@ GitHub Actions (`.github/workflows/ci.yml`) exécute les vérifications sur chaq
 
 Après une modification de `wrangler.jsonc`, régénérer les types : `npm run cf-typegen`.
 
+## Tournois de test et simulation
+
+Sur les prévisualisations de branche, l'accueil propose « Nouveau tournoi de test (15 équipes) » et l'onglet Journée un panneau « Simulation (test) » qui remplit les scores manquants (SPEC F15). En production, ces outils sont absents et le serveur refuse tout tournoi de test (variable `SIMULATION` dans `wrangler.jsonc`). En local, créer `.dev.vars` avec `SIMULATION=on` pour les activer.
+
 ## Base de données (D1)
 
 | Base | Usage |

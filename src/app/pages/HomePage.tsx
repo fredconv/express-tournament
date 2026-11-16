@@ -2,15 +2,32 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { newId, todayIso } from '../../client/ids';
 import { draftStore } from '../../client/storage';
+import { TestBadge } from '../components/TestBadge';
 import { createDraft, type Draft, duplicateDraft } from '../draft/model';
+import { createTestDraft } from '../draft/simulation';
+import { useSimulationAllowed } from '../draft/useSimulationAllowed';
 import { fr } from '../i18n/fr';
 
 export function HomePage() {
   const navigate = useNavigate();
   const [drafts, setDrafts] = useState(() => draftStore.list());
+  const simulation = useSimulationAllowed();
 
   const start = () => {
     const draft = createDraft(todayIso(), newId, new Date().toISOString());
+    draftStore.save(draft);
+    navigate(`/edit/${draft.id}`);
+  };
+
+  const startTest = () => {
+    const now = new Date();
+    const draft = createTestDraft(
+      fr.home.testName,
+      todayIso(),
+      newId,
+      now.toISOString(),
+      now.getTime(),
+    );
     draftStore.save(draft);
     navigate(`/edit/${draft.id}`);
   };
@@ -40,6 +57,14 @@ export function HomePage() {
       <button type="button" className="button button--primary button--block" onClick={start}>
         {fr.home.newTournament}
       </button>
+      {simulation && (
+        <div className="test-start">
+          <button type="button" className="button button--block" onClick={startTest}>
+            <TestBadge /> {fr.home.newTest}
+          </button>
+          <p className="muted small">{fr.home.testHelp}</p>
+        </div>
+      )}
       {!draftStore.persistent && <p className="notice notice--warning">{fr.home.noStorage}</p>}
 
       <h2>{fr.home.myDrafts}</h2>
@@ -50,7 +75,10 @@ export function HomePage() {
           {drafts.map((d) => (
             <li key={d.id} className="card">
               <Link to={`/edit/${d.id}`} className="card__link">
-                <strong>{d.name.trim() || fr.home.untitled}</strong>
+                <strong>
+                  {d.name.trim() || fr.home.untitled}
+                  {d.test && <TestBadge />}
+                </strong>
                 <span className="muted">
                   {formatDate(d.date)} · {fr.home.teamsCount(d.teams.length)}
                 </span>

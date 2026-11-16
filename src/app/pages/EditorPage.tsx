@@ -5,6 +5,7 @@ import { PlanningStep } from '../components/PlanningStep';
 import { PublishPanel } from '../components/PublishPanel';
 import { SettingsStep } from '../components/SettingsStep';
 import { TeamsStep } from '../components/TeamsStep';
+import { TestBadge } from '../components/TestBadge';
 import { isScheduleStale } from '../draft/model';
 import { useDraft } from '../draft/useDraft';
 import { fr } from '../i18n/fr';
@@ -36,7 +37,10 @@ export function EditorPage() {
         <Link to="/" className="back-link">
           ← {fr.common.back}
         </Link>
-        <h1 className="editor-title">{draft.name.trim() || fr.home.untitled}</h1>
+        <h1 className="editor-title">
+          {draft.name.trim() || fr.home.untitled}
+          {draft.test && <TestBadge />}
+        </h1>
         <PublishPanel draft={draft} update={update} />
       </header>
 

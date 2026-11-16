@@ -21,6 +21,62 @@ export const fr = {
     localOnly: 'Les tournois restent sur cet appareil tant qu’ils ne sont pas publiés.',
     noStorage:
       'Le stockage local est désactivé dans ce navigateur : le brouillon sera perdu à la fermeture.',
+    newTest: 'Nouveau tournoi de test (15 équipes)',
+    testName: 'Tournoi de test',
+    testHelp:
+      'Environnement de test : la simulation des scores est disponible sur les tournois de test.',
+  },
+  test: {
+    badge: 'TEST',
+    badgeLabel: 'Tournoi de test',
+    publicBanner: 'Tournoi de test : résultats fictifs.',
+  },
+  simulation: {
+    title: 'Simulation (test)',
+    help: 'Remplit les scores manquants avec des résultats valides pour le format choisi. Les scores saisis à la main ne sont jamais modifiés.',
+    disabled: 'La simulation est désactivée sur ce serveur.',
+    mode: 'Résultats',
+    modes: {
+      random: 'Aléatoires réalistes',
+      favorites: 'Favoriser les premières équipes de la liste',
+    },
+    seed: 'Graine (même graine = mêmes scores)',
+    phases: { morning: 'Matin', afternoon: 'Après-midi', final: 'Finale' },
+    phaseHelp: {
+      morning: 'Poules du matin',
+      afternoon: 'Poules de niveau',
+      final: 'Finale et vainqueur',
+    },
+    status: {
+      ready: (n: number) => `${n} match${n > 1 ? 's' : ''} à simuler`,
+      complete: 'Tous les scores saisis',
+      'no-phase': 'Phase pas encore générée',
+      stale: 'À régénérer avant de simuler',
+      'not-test': 'Réservé aux tournois de test',
+    },
+    simulate: (phase: string) => `Simuler : ${phase}`,
+    toEnd: 'Simuler jusqu’à la fin',
+    reset: 'Effacer les scores simulés',
+    confirmReset: (n: number) =>
+      `Effacer ${n} score${n > 1 ? 's' : ''} simulé${n > 1 ? 's' : ''} ? Les scores saisis à la main sont conservés. Les phases suivantes devront être régénérées.`,
+    filled: (n: number, phase: string) =>
+      `${n} score${n > 1 ? 's' : ''} simulé${n > 1 ? 's' : ''} (${phase}). Vérifiez les classements avant de poursuivre.`,
+    reached: {
+      none: 'Aucune phase simulée.',
+      morning: 'Matin simulé.',
+      afternoon: 'Matin et après-midi simulés.',
+      final: 'Journée simulée jusqu’à la finale : le vainqueur est affiché.',
+    },
+    stop: {
+      'not-test': 'Réservé aux tournois de test.',
+      'no-morning': 'Générez d’abord le matin.',
+      stale:
+        'Arrêt : une phase est à régénérer (des scores ont changé). Régénérez-la puis relancez.',
+      'afternoon-blocked': 'Arrêt : l’après-midi ne peut pas encore être généré.',
+      'final-blocked': 'Arrêt : la finale ne peut pas encore être générée.',
+    },
+    removed: (n: number) =>
+      `${n} score${n > 1 ? 's' : ''} simulé${n > 1 ? 's' : ''} effacé${n > 1 ? 's' : ''}.`,
   },
   editor: {
     notFound: 'Ce brouillon n’existe pas sur cet appareil.',
@@ -286,6 +342,7 @@ export const fr = {
       network: 'Pas de connexion : réessayez quand le réseau revient.',
       conflict: 'Le tournoi a été modifié depuis un autre appareil : publication refusée.',
       unauthorized: 'Le code de gestion de ce tournoi n’est pas sur cet appareil.',
+      forbidden: 'Les tournois de test ne sont pas acceptés sur ce serveur.',
       'not-found': 'Ce tournoi n’existe plus sur le serveur.',
       invalid: 'Le serveur a refusé ce planning (données incohérentes).',
       server: 'Erreur du serveur : réessayez dans un instant.',

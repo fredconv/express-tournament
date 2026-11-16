@@ -100,6 +100,8 @@ const docShape = z.object({
   ),
   /** Teams that left during the day (SPEC F11); absent on older documents. */
   withdrawn: z.array(idSchema).max(LIMITS.maxTeams).optional(),
+  /** Test tournament (SPEC F15): accepted only where the server allows simulation. */
+  test: z.literal(true).optional(),
 });
 
 export const tournamentDocSchema = docShape.superRefine((doc, ctx) => {

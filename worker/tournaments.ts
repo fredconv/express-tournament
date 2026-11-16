@@ -13,6 +13,12 @@ const ID_PATTERN = /^[a-z2-9]{10}$/;
 
 export const tournaments = new Hono<{ Bindings: Env }>();
 
+/** Test tournaments (SPEC F15) only where the deployment enables simulation (previews). */
+export function simulationAllowed(env: Env): boolean {
+  // String(): the generated type only knows the production value.
+  return String(env.SIMULATION) === 'on';
+}
+
 const limit = bodyLimit({
   maxSize: MAX_BODY_BYTES,
   onError: (c) => c.json({ error: 'too_large' }, 413),
@@ -21,6 +27,9 @@ const limit = bodyLimit({
 tournaments.post('/', limit, async (c) => {
   const parsed = tournamentDocSchema.safeParse(await readJson(c.req.raw));
   if (!parsed.success) return c.json({ error: 'invalid_document' }, 422);
+  if (parsed.data.test && !simulationAllowed(c.env)) {
+    return c.json({ error: 'test_disabled' }, 403);
+  }
 
   const id = newPublicId();
   const ownerToken = newOwnerCode();
@@ -63,6 +72,13 @@ tournaments.put('/:id', limit, async (c) => {
   }
   const parsed = tournamentDocSchema.safeParse(await readJson(c.req.raw));
   if (!parsed.success) return c.json({ error: 'invalid_document' }, 422);
+  if (parsed.data.test && !simulationAllowed(c.env)) {
+    return c.json({ error: 'test_disabled' }, 403);
+  }
+  // A real tournament never becomes a test one, and the other way round.
+  if (Boolean(parsed.data.test) !== isTestDoc(stored.doc)) {
+    return c.json({ error: 'test_flag_changed' }, 422);
+  }
 
   const updated = await updateTournament(c.env.DB, {
     id,
@@ -74,6 +90,10 @@ tournaments.put('/:id', limit, async (c) => {
   if (!updated) return c.json({ error: 'conflict', version: stored.version }, 409);
   return c.json({ version: version + 1 });
 });
+
+function isTestDoc(doc: string): boolean {
+  return (JSON.parse(doc) as { test?: unknown }).test === true;
+}
 
 async function readJson(request: Request): Promise<unknown> {
   try {
