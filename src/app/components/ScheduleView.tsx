@@ -75,7 +75,7 @@ export function ScheduleView(props: ScheduleViewProps) {
         <span className="match-card__teams">
           {team(m.teamAId, winner === 'a')}
           <span
-            className={`match-card__vs${sets && isForfeit(sets) ? ' match-card__vs--forfeit' : ''}`}
+            className={`match-card__vs${!sets ? ' match-card__vs--pending' : isForfeit(sets) ? ' match-card__vs--forfeit' : ''}`}
           >
             {!sets
               ? fr.planning.vs

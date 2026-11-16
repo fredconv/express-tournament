@@ -14,6 +14,12 @@
   --space: 1rem;
   --radius: 0.625rem;
   --tap: 2.75rem;
+  --color-primary-hover: #0047d6;
+  --color-surface-hover: #eef1f6;
+  --shadow-sm: 0 1px 2px rgb(20 23 31 / 0.06);
+  --focus-ring: 3px solid var(--color-primary);
+  --duration: 150ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   line-height: 1.5;
   color: var(--color-text);
@@ -28,6 +34,30 @@
 
 body {
   margin: 0;
+}
+
+/* Visible keyboard focus everywhere (WCAG 2.4.7, 2.4.11) */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(-0.25rem);
+  }
+}
+
+/* Motion is decoration only: removed when the user asks for less (WCAG 2.3.3). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 .page {
@@ -85,6 +115,18 @@ a {
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+  transition:
+    background-color var(--duration) var(--ease),
+    border-color var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
+}
+
+.button:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .button:disabled {
@@ -96,6 +138,11 @@ a {
   background: var(--color-primary);
   border-color: var(--color-primary);
   color: var(--color-primary-text);
+}
+
+.button--primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 .button--ghost {
@@ -245,6 +292,10 @@ a {
   border: 1px solid var(--color-border);
 }
 
+.notice[role="status"] {
+  animation: appear var(--duration) var(--ease);
+}
+
 .notice p,
 .notice ul {
   margin: 0.25rem 0;
@@ -337,10 +388,32 @@ a {
   font-weight: 700;
 }
 
+.tabs__tab {
+  transition:
+    background-color var(--duration) var(--ease),
+    border-color var(--duration) var(--ease);
+}
+
+.tabs__tab:hover:not(.tabs__tab--active) {
+  background: var(--color-surface-hover);
+}
+
 .tabs__number {
   display: block;
   font-size: 0.75rem;
   color: var(--color-muted);
+}
+
+/* Narrow screens: one line per tab, the step order stays readable by position. */
+@media (max-width: 30rem) {
+  .tabs__tab {
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .tabs__number {
+    display: none;
+  }
 }
 
 .tabs__dot {
@@ -404,11 +477,14 @@ a {
 
 .match-card {
   display: grid;
-  gap: 0.15rem;
-  padding: 0.6rem 0.8rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0.5rem;
+  row-gap: 0.2rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .match-card__meta {
@@ -536,7 +612,60 @@ a {
   min-height: var(--tap);
 }
 
+/*
+ * Compact mobile card: meta and status on the first line, then each team on its own
+ * line with the score and the edit action on the right.
+ */
+.match-card > * {
+  grid-column: 1 / -1;
+}
+
+.match-card .match-card__teams {
+  display: contents;
+}
+
+.match-card .match-card__teams > :first-child {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.match-card .match-card__teams > :last-child {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.match-card .match-card__vs {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
+  max-width: 9rem;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.match-card > .score-link {
+  grid-column: 2;
+  grid-row: 3;
+  justify-self: end;
+  min-height: 2rem;
+}
+
+.match-card > .match-card__meta {
+  grid-row: 1;
+}
+
+.match-card__teams > span {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.match-card .match-card__vs--pending {
+  color: transparent;
+  font-size: 0;
+}
+
 .score-form {
+  animation: appear var(--duration) var(--ease);
   display: grid;
   gap: 0.5rem;
   padding-top: 0.5rem;
